@@ -60,7 +60,7 @@ fi
 
 # Step 4: Run the nuclei fuzzer tool on the above text file
 echo "Running nuclei fuzzer on paramspider_output.txt"
-nuclei -l paramspider_output.txt -t fuzzing-templates
+nuclei -l /home/kali/Desktop/Bugs/OpenRedirect/paramspider_output.txt -t fuzzing-templates
 
 # Step 5: End with general message as the scan is completed
 echo "Scan is completed."
