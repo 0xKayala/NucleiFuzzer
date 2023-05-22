@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # ASCII art
-
 echo -e "\e[91m
 #   _   _            _      _ ______
 #  | \ | |          | |    (_)  ____| 
