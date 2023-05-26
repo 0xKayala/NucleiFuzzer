@@ -10,3 +10,10 @@ By combining the power of ParamSpider and Nuclei, NucleiFuzzer provides an all-i
 Whether you are a security professional or a web developer, NucleiFuzzer is an invaluable addition to your toolkit. It streamlines the vulnerability detection process, enabling you to identify and remediate potential security risks efficiently.
 
 Enhance the security of your web applications by downloading NucleiFuzzer today and take proactive measures to protect against vulnerabilities and potential attacks.
+
+### Tools included:
+[ParamSpider](https://github.com/devanshbatham/ParamSpider) `git clone https://github.com/devanshbatham/ParamSpider.git`<br><br>
+[Nuclei](https://github.com/projectdiscovery/nuclei) `git clone https://github.com/projectdiscovery/nuclei.git`
+
+### Templates:
+[Fuzzing Templates](https://github.com/projectdiscovery/fuzzing-templates) `git clone https://github.com/projectdiscovery/fuzzing-templates.git`
