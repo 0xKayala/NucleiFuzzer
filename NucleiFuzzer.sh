@@ -50,13 +50,6 @@ fi
 echo "Running ParamSpider on $domain"
 python3 /home/kali/ParamSpider/paramspider.py -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --quiet -o /home/kali/paramspider_output.txt
 
-# Check if ParamSpider found any unique URLs
-unique_urls=$(grep -oP '(?<=\=)[^&]+' /home/kali/paramspider_output.txt | sort -u | wc -l)
-if [ $unique_urls -eq 0 ]; then
-    echo "No URLs Found"
-    exit 1
-fi
-
 # Step 4: Run the nuclei fuzzer tool on the above text file
 echo "Running nuclei fuzzer on paramspider_output.txt"
 nuclei -l /home/kali/paramspider_output.txt -t fuzzing-templates -rl 05
