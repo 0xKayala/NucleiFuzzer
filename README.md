@@ -11,12 +11,16 @@ Whether you are a security professional or a web developer, NucleiFuzzer is an i
 
 Enhance the security of your web applications by downloading NucleiFuzzer today and take proactive measures to protect against vulnerabilities and potential attacks.
 
-## Output
-![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/03ca01b9-a756-46f6-9a10-2110d8a3b321)
-
 ### Tools included:
 [ParamSpider](https://github.com/devanshbatham/ParamSpider) `git clone https://github.com/devanshbatham/ParamSpider.git`<br><br>
 [Nuclei](https://github.com/projectdiscovery/nuclei) `git clone https://github.com/projectdiscovery/nuclei.git`
 
 ### Templates:
 [Fuzzing Templates](https://github.com/projectdiscovery/fuzzing-templates) `git clone https://github.com/projectdiscovery/fuzzing-templates.git`
+
+# Screenshot
+![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/4ca86392-684b-4224-8138-148d5c629642)
+
+# Output
+![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/03ca01b9-a756-46f6-9a10-2110d8a3b321)
+
