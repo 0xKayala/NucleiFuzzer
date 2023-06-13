@@ -49,7 +49,7 @@ fi
 
 # Step 3: Get the vulnerable parameters of the given domain name using ParamSpider tool and save the output into a text file
 echo "Running ParamSpider on $domain"
-python3 /home/kali/ParamSpider/paramspider.py -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --quiet -o /home/kali/paramspider_output.txt
+python3 /home/kali/ParamSpider/paramspider.py -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o /home/kali/paramspider_output.txt
 
 # Step 4: Run the nuclei fuzzer tool on the above text file
 echo "Running nuclei fuzzer on paramspider_output.txt"
