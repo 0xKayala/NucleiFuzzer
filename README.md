@@ -41,7 +41,7 @@ Options:
 2. cd NucleiFuzzer
 3. chmod +x NucleiFuzzer.sh
 4. ./NucleiFuzzer.sh
-Note: Tool links such as `Paramspider`, `Nuclei` & `Fuzzing-Templates` are provided in the top section. Change the paths in the `NucleiFuzzer.sh` file according to the `paramspider tool saved location` & `fuzzing-templates saved location` on your pc.
+<br>Note: Tool links such as `Paramspider`, `Nuclei` & `Fuzzing-Templates` are provided in the top section. Change the paths in the `NucleiFuzzer.sh` file according to the `paramspider tool saved location` & `fuzzing-templates saved location` on your pc.
 
 Made by
 `Satya Prakash` | `0xKayala` \
