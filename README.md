@@ -24,3 +24,34 @@ Enhance the security of your web applications by downloading NucleiFuzzer today 
 # Output
 ![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/03ca01b9-a756-46f6-9a10-2110d8a3b321)
 
+## Usage
+
+```sh
+./NucleiFuzzer -h
+```
+
+This will display help for the tool. Here are the options it supports.
+
+
+```console
+NucleiFuzzer is a powerful automation tool for detecting xss,sqli,ssrf,open-redirect..etc vulnerabilities in web applications
+
+Usage: ./NucleiFuzzer.sh [options]
+
+Options:
+  -h, --help              Display help information
+  -d, --domain <domain>   Domain to scan for xss,sqli,ssrf,open-redirect..etc vulnerabilities
+```  
+
+### Steps to Install:
+1. git clone https://github.com/0xKayala/NucleiFuzzer.git
+2. cd NucleiFuzzer
+3. chmod +x NucleiFuzzer.sh
+4. ./NucleiFuzzer.sh
+
+
+Made by
+`Satya Prakash` | `0xKayala` \
+A `Security Researcher` and `Bug Hunter` \
+About me on `about.me/satyakayala`
+Subscribe me on `Youtube.com/@0xKayala`
