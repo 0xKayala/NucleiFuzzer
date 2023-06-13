@@ -1,5 +1,7 @@
-# NucleiFuzzer
+# NucleiFuzzer (Automation)
 `NucleiFuzzer` is an automation tool that combines `ParamSpider` and `Nuclei` to enhance web application security testing. It uses `ParamSpider` to identify potential entry points and `Nuclei's` templates to scan for vulnerabilities. `NucleiFuzzer` streamlines the process, making it easier for security professionals and web developers to detect and address security risks efficiently. Download `NucleiFuzzer` to protect your web applications from vulnerabilities and attacks.
+
+**Note:** `Nuclei` + `Paramspider` = `NucleiFuzzer`
 
 ### Tools included:
 [ParamSpider](https://github.com/devanshbatham/ParamSpider) `git clone https://github.com/devanshbatham/ParamSpider.git`<br><br>
