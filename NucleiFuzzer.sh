@@ -53,13 +53,13 @@ python3 /home/kali/ParamSpider/paramspider.py -d "$domain" --exclude png,jpg,gif
 
 # Check whether URLs were collected or not
 if [ ! -s /home/kali/paramspider_output.txt ]; then
-    echo "No URLs were collected. Exiting..."
+    echo "No URLs Found. Exiting..."
     exit 1
 fi
 
-# Step 4: Run the NucleiFuzzer tool on the above text file
+# Step 4: Run the NucleiFuzzer tool on paramspider_output.txt file
 echo "Running NucleiFuzzer on paramspider_output.txt"
 nuclei -l /home/kali/paramspider_output.txt -t fuzzing-templates -rl 05
 
 # Step 5: End with general message as the scan is completed
-echo "Scan is completed."
+echo "Scan is completed - Happy Fuzzing"
