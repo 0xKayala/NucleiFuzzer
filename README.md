@@ -14,7 +14,7 @@
 ![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/4ca86392-684b-4224-8138-148d5c629642)
 
 # Output
-![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/03ca01b9-a756-46f6-9a10-2110d8a3b321)
+![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/4bc2998b-b48d-4705-8ba7-16ff4c0aace7)
 ![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/bf911936-1eed-42bc-b81f-35d71a8ebf49)
 
 ## Usage
