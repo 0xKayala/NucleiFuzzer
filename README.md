@@ -39,7 +39,7 @@ Options:
 ### Steps to Install:
 1. git clone https://github.com/0xKayala/NucleiFuzzer.git
 2. cd NucleiFuzzer
-3. mv NucleiFuzzer.sh /home/kali/
+3. mv NucleiFuzzer.sh /home/kali (Move it to the location from which you want to run it)
 4. sudo chmod +x NucleiFuzzer.sh
 5. ./NucleiFuzzer.sh
 
