@@ -49,17 +49,17 @@ fi
 
 # Step 3: Get the vulnerable parameters of the given domain name using ParamSpider tool and save the output into a text file
 echo "Running ParamSpider on $domain"
-python3 /home/kali/ParamSpider/paramspider.py -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o /home/kali/paramspider_output.txt
+python3 /home/kali/ParamSpider/paramspider.py -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o paramspider_output.txt
 
 # Check whether URLs were collected or not
-if [ ! -s /home/kali/paramspider_output.txt ]; then
+if [ ! -s paramspider_output.txt ]; then
     echo "No URLs Found. Exiting..."
     exit 1
 fi
 
 # Step 4: Run the NucleiFuzzer tool on paramspider_output.txt file
 echo "Running NucleiFuzzer on paramspider_output.txt"
-nuclei -l /home/kali/paramspider_output.txt -t fuzzing-templates -rl 05
+nuclei -l paramspider_output.txt -t /home/kali/fuzzing-templates -rl 05
 
 # Step 5: End with general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
