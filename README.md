@@ -39,9 +39,8 @@ Options:
 ### Steps to Install:
 1. git clone https://github.com/0xKayala/NucleiFuzzer.git
 2. cd NucleiFuzzer
-3. mv NucleiFuzzer.sh /home/kali (Move it to the location from which you want to run it)
-4. sudo chmod +x NucleiFuzzer.sh
-5. ./NucleiFuzzer.sh <br>
+3. sudo chmod +x NucleiFuzzer.sh
+4. ./NucleiFuzzer.sh <br>
 **Note:** Tool links such as `Paramspider`, `Nuclei` & `Fuzzing-Templates` are provided in the top section. Change the paths in the `NucleiFuzzer.sh` file according to the `paramspider tool saved location` & `fuzzing-templates saved location` on your pc.
 
 Made by
