@@ -43,7 +43,7 @@ done
 
 # Step 2: Ask the user to enter the domain name
 if [ -z "$domain" ]; then
-    echo "Enter the domain name: "
+    echo "Enter the domain name: target.com"
     read domain
 fi
 
@@ -51,8 +51,14 @@ fi
 echo "Running ParamSpider on $domain"
 python3 /home/kali/ParamSpider/paramspider.py -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o /home/kali/paramspider_output.txt
 
-# Step 4: Run the nuclei fuzzer tool on the above text file
-echo "Running nuclei fuzzer on paramspider_output.txt"
+# Check whether URLs were collected or not
+if [ ! -s /home/kali/paramspider_output.txt ]; then
+    echo "No URLs were collected. Exiting..."
+    exit 1
+fi
+
+# Step 4: Run the NucleiFuzzer tool on the above text file
+echo "Running NucleiFuzzer on paramspider_output.txt"
 nuclei -l /home/kali/paramspider_output.txt -t fuzzing-templates -rl 05
 
 # Step 5: End with general message as the scan is completed
