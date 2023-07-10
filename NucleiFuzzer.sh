@@ -70,17 +70,17 @@ fi
 
 # Step 3: Get the vulnerable parameters of the given domain name using ParamSpider tool and save the output into a text file
 echo "Running ParamSpider on $domain"
-python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o paramspider_output.txt
+python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o $domain-paramspider_output.txt
 
 # Check whether URLs were collected or not
-if [ ! -s output/paramspider_output.txt ]; then
+if [ ! -s output/$domain-paramspider_output.txt ]; then
     echo "No URLs Found. Exiting..."
     exit 1
 fi
 
-# Step 4: Run the Nuclei Fuzzing templates on paramspider_output.txt file
-echo "Running Nuclei on paramspider_output.txt"
-nuclei -l output/paramspider_output.txt -t "$home_dir/fuzzing-templates" -rl 05
+# Step 4: Run the Nuclei Fuzzing templates on $domain-paramspider_output.txt file
+echo "Running Nuclei on $domain-paramspider_output.txt"
+nuclei -l output/$domain-paramspider_output.txt -t "$home_dir/fuzzing-templates" -rl 05
 
-# Step 5: End with general message as the scan is completed
+# Step 5: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
