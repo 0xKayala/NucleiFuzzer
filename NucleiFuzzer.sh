@@ -78,7 +78,9 @@ if [ ! -s output/$domain-paramspider_output.txt ]; then
     exit 1
 fi
 
-# Step 4: Run the Nuclei Fuzzing templates on $domain-paramspider_output.txt file
+
+# Step 4: Run the Nuclei Fuzzing templates on <domain>-paramspider_output.txt file
+
 echo "Running Nuclei on $domain-paramspider_output.txt"
 nuclei -l output/$domain-paramspider_output.txt -t "$home_dir/fuzzing-templates" -rl 05
 
