@@ -20,27 +20,27 @@
 ## Usage
 
 ```sh
-./NucleiFuzzer -h
+nucleifuzzer -h
 ```
 
 This will display help for the tool. Here are the options it supports.
 
 
 ```console
-NucleiFuzzer is a powerful automation tool for detecting xss,sqli,ssrf,open-redirect..etc vulnerabilities in web applications
+NucleiFuzzer is a Powerful Automation tool for detecting XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities in Web Applications
 
-Usage: ./NucleiFuzzer.sh [options]
+Usage: /usr/local/bin/nucleifuzzer [options]
 
 Options:
   -h, --help              Display help information
-  -d, --domain <domain>   Domain to scan for xss,sqli,ssrf,open-redirect..etc vulnerabilities
+  -d, --domain <domain>   Domain to scan for XSS, SQLi, SSRF, Open-Redirect..etc vulnerabilities
 ```  
 
 ### Steps to Install:
 1. git clone https://github.com/0xKayala/NucleiFuzzer.git
 2. cd NucleiFuzzer
-3. sudo chmod +x NucleiFuzzer.sh
-4. ./NucleiFuzzer.sh <br>
+3. sudo chmod +x install.sh
+4. ./install.sh <br>
 
 Made by
 `Satya Prakash` | `0xKayala` \
