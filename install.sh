@@ -9,6 +9,9 @@ sudo mv nucleifuzzer /usr/local/bin/
 # Make the NucleiFuzzer file executable
 sudo chmod +x /usr/local/bin/nucleifuzzer
 
+# Move to Home Directory $home_dir
+cd $home_dir
+
 # Remove the NucleiFuzzer folder from the home directory
 if [ -d "$home_dir/NucleiFuzzer" ]; then
     echo "Removing NucleiFuzzer folder..."
