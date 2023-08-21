@@ -41,6 +41,7 @@ Options:
 2. cd NucleiFuzzer
 3. sudo chmod +x install.sh
 4. ./install.sh <br>
+5. nucleifuzzer -h
 
 Made by
 `Satya Prakash` | `0xKayala` \
