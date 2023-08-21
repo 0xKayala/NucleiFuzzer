@@ -9,4 +9,10 @@ sudo mv nucleifuzzer /usr/local/bin/
 # Make the NucleiFuzzer file executable
 sudo chmod +x /usr/local/bin/nucleifuzzer
 
-echo "NucleiFuzzer has been installed successfully! Now Enter 'nucleifuzzer' to run the tool."
+# Remove the NucleiFuzzer folder from the home directory
+if [ -d "$home_dir/NucleiFuzzer" ]; then
+    echo "Removing NucleiFuzzer folder..."
+    rm -r "$home_dir/NucleiFuzzer"
+fi
+
+echo "NucleiFuzzer has been installed successfully! Now Enter the command 'nucleifuzzer' to run the tool."
