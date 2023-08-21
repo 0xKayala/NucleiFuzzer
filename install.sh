@@ -1,18 +1,12 @@
 #!/bin/bash
 
-# Clone the NucleiFuzzer repository
-git clone https://github.com/0xKayala/NucleiFuzzer.git
+# Rename the NucleiFuzzer.sh file to NucleiFuzzer
+mv NucleiFuzzer.sh nucleifuzzer
 
-# Navigate to the NucleiFuzzer directory
-cd NucleiFuzzer
+# Move the NucleiFuzzer file to /usr/local/bin
+sudo mv nucleifuzzer /usr/local/bin/
 
-# Make the NucleiFuzzer.sh script executable
-chmod +x NucleiFuzzer.sh
+# Make the NucleiFuzzer file executable
+sudo chmod +x /usr/local/bin/nucleifuzzer
 
-# Create a symbolic link without the .sh extension
-ln -s NucleiFuzzer.sh NucleiFuzzer
-
-# Move the symbolic link to a directory in the PATH (e.g., /usr/local/bin)
-sudo mv NucleiFuzzer /usr/local/bin
-
-echo "Installation completed. You can now use 'NucleiFuzzer' command to run the script."
+echo "NucleiFuzzer has been installed successfully! Now Enter 'nucleifuzzer' to run the tool."
