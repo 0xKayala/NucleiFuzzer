@@ -82,7 +82,7 @@ fi
 
 # Step 4: Run the Nuclei Fuzzing templates on $domain.txt file
 echo "Running Nuclei on $domain.txt"
-nuclei -l results/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05
+nuclei -l results/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05 -es info
 
 # Step 5: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
