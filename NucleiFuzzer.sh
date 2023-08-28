@@ -25,11 +25,9 @@ display_help() {
 home_dir=$(eval echo ~$USER)
 
 # Check if ParamSpider is already cloned and installed
-if ! command -v paramspider &> /dev/null; then
-    echo "Installing ParamSpider..."
-    git clone https://github.com/devanshbatham/paramspider.git "$home_dir/paramspider"
-    cd "$home_dir/paramspider" || exit
-    pip install .
+if [ ! -d "$home_dir/ParamSpider" ]; then
+    echo "Cloning ParamSpider..."
+    git clone https://github.com/0xKayala/ParamSpider "$home_dir/ParamSpider"
 fi
 
 # Check if fuzzing-templates is already cloned.
@@ -72,17 +70,17 @@ fi
 
 # Step 3: Get the vulnerable parameters of the given domain name using ParamSpider tool and save the output into a text file
 echo "Running ParamSpider on $domain"
-paramspider -d "$domain"
+python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o output/$domain.txt
 
 # Check whether URLs were collected or not
-if [ ! -s results/$domain.txt ]; then
+if [ ! -s output/$domain.txt ]; then
     echo "No URLs Found. Exiting..."
     exit 1
 fi
 
 # Step 4: Run the Nuclei Fuzzing templates on $domain.txt file
 echo "Running Nuclei on $domain.txt"
-nuclei -l results/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05 -es info
+nuclei -l output/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05
 
 # Step 5: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
