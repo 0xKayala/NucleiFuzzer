@@ -46,6 +46,7 @@ Options:
 
 Made by
 `Satya Prakash` | `0xKayala` \
+
 A `Security Researcher` and `Bug Hunter` \
 
 ### Connect with me:
