@@ -47,5 +47,5 @@ Options:
 Made by
 `Satya Prakash` | `0xKayala` \
 A `Security Researcher` and `Bug Hunter` \
-About me on `about.me/satyakayala`
-Subscribe me on `Youtube.com/@0xKayala`
+Ping me on <a href="https://www.linkedin.com/in/0xkayala/"><img src="https://img.shields.io/badge/LinkedIn-blue?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn Badge"/></a> or <a href="https://twitter.com/0xKayala"><img src="https://img.shields.io/badge/Twitter-blue?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter Badge"/></a>
+Subscribe me on <a href="https://www.youtube.com/@0xKayala"><img src="https://img.shields.io/badge/YouTube-red?style=for-the-badge&logo=youtube&logoColor=white" alt="Youtube Badge"/></a>
