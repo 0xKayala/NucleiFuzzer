@@ -4,7 +4,7 @@
 **Note:** `Nuclei` + `Paramspider` = `NucleiFuzzer`
 
 ### Tools included:
-[ParamSpider](https://github.com/devanshbatham/ParamSpider) `git clone https://github.com/devanshbatham/ParamSpider.git`<br><br>
+[ParamSpider](https://github.com/0xKayala/ParamSpider) `git clone https://github.com/0xKayala/ParamSpider.git`<br><br>
 [Nuclei](https://github.com/projectdiscovery/nuclei) `git clone https://github.com/projectdiscovery/nuclei.git`
 
 ### Templates:
