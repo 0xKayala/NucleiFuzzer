@@ -59,5 +59,5 @@ A `Security Researcher` and `Bug Hunter` \
 <a href="https://www.youtube.com/@0xkayala" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/youtube.svg" alt="0xkayala" height="30" width="40" /></a>
 </p>
 
-## Support:
+## Support me:
 <p><a href="https://www.buymeacoffee.com/satyakayala"> <img align="left" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="50" width="210" alt="satyakayala" /></a></p><br><br>
