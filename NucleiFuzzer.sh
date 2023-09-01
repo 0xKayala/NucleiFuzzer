@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # ASCII art
-echo -e "\e[91m
-    _   __           __     _ ______                         
+printf "\e[91m
+    _   __           __     _ ______
    / | / /_  _______/ /__  (_) ____/_  __________  ___  _____
   /  |/ / / / / ___/ / _ \/ / /_  / / / /_  /_  / / _ \/ ___/
- / /|  / /_/ / /__/ /  __/ / __/ / /_/ / / /_/ /_/  __/ /    
+ / /|  / /_/ / /__/ /  __/ / __/ / /_/ / / /_/ /_/  __/ /
 /_/ |_/\__,_/\___/_/\___/_/_/    \__,_/ /___/___/\___/_/
 
                                Made by Satya Prakash (0xKayala)
@@ -64,7 +64,7 @@ done
 
 # Step 2: Ask the user to enter the domain name
 if [ -z "$domain" ]; then
-    echo "Enter the domain name: target.com"
+    echo "Enter the domain name (eg: target.com):"
     read domain
 fi
 
