@@ -1,13 +1,10 @@
 #!/bin/bash
 
-# Rename the NucleiFuzzer.sh file to NucleiFuzzer
-mv NucleiFuzzer.sh nucleifuzzer
-
-# Move the NucleiFuzzer file to /usr/local/bin
-sudo mv nucleifuzzer /usr/local/bin/
+# Rename and move NucleiFuzzer.sh file to /usr/local/bin/nucleifuzzer
+sudo mv NucleiFuzzer.sh /usr/local/bin/nucleifuzzer
 
 # Make the NucleiFuzzer file executable
-sudo chmod +x /usr/local/bin/nucleifuzzer
+sudo chmod u+x /usr/local/bin/nucleifuzzer
 
 # Remove the NucleiFuzzer folder from the home directory
 if [ -d "$home_dir/NucleiFuzzer" ]; then
