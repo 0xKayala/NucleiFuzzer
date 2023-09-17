@@ -23,24 +23,29 @@ display_help() {
 
 # Get the current user's home directory
 home_dir=$(eval echo ~$USER)
+# Set the folder for paramspider
+paramspider_dir="$home_dir/ParamSpider"
+# Set the folder for fuzzing template
+fuzzing_templates_dir="$home_dir/fuzzing-templates"
+# Set output folder (default)
+output_dir="output"
+
+# Function to clone repo after checking if it exists
+clone_repo() {
+    local repo_url=$1
+    local clone_dir=$2
+
+    if [ ! -d "$clone_dir" ]; then
+        echo "Cloning repository from $repo_url..."
+        git clone $repo_url $clone_dir || { echo "Failed to clone repository. Exiting..."; exit 1; }
+    fi
+}
 
 # Check if ParamSpider is already cloned and installed
-if [ ! -d "$home_dir/ParamSpider" ]; then
-    echo "Cloning ParamSpider..."
-    git clone https://github.com/0xKayala/ParamSpider "$home_dir/ParamSpider"
-fi
+clone_repo "https://github.com/0xKayala/ParamSpider" $paramspider_dir
 
 # Check if fuzzing-templates is already cloned.
-if [ ! -d "$home_dir/fuzzing-templates" ]; then
-    echo "Cloning fuzzing-templates..."
-    git clone https://github.com/projectdiscovery/fuzzing-templates.git "$home_dir/fuzzing-templates"
-fi
-
-# Check if nuclei is installed, if not, install it
-if ! command -v nuclei &> /dev/null; then
-    echo "Installing Nuclei..."
-    go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
-fi
+clone_repo "https://github.com/projectdiscovery/fuzzing-templates.git" $fuzzing_templates_dir
 
 # Step 1: Parse command line arguments
 while [[ $# -gt 0 ]]
@@ -52,6 +57,11 @@ do
             ;;
         -d|--domain)
             domain="$2"
+            shift
+            shift
+            ;;
+        -o|--output)
+            output_dir="$2"
             shift
             shift
             ;;
@@ -70,17 +80,17 @@ fi
 
 # Step 3: Get the vulnerable parameters of the given domain name using ParamSpider tool and save the output into a text file
 echo "Running ParamSpider on $domain"
-python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o output/$domain.txt
+python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o $output_dir/$domain.txt
 
 # Check whether URLs were collected or not
-if [ ! -s output/$domain.txt ]; then
+if [ ! -s $output_dir/$domain.txt ]; then
     echo "No URLs Found. Exiting..."
     exit 1
 fi
 
 # Step 4: Run the Nuclei Fuzzing templates on $domain.txt file
-echo "Running Nuclei on $domain.txt"
-nuclei -l output/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05
+echo "Running Nuclei on $output_dir/$domain.txt"
+nuclei -l $output_dir/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05
 
 # Step 5: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
