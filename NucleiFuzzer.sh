@@ -18,6 +18,7 @@ display_help() {
     echo "Options:"
     echo "  -h, --help              Display help information"
     echo "  -d, --domain <domain>   Domain to scan for XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities"
+    echo "  -o, --output <output>   Folder to store the output results"
     exit 0
 }
 
@@ -72,10 +73,16 @@ do
     esac
 done
 
-# Step 2: Ask the user to enter the domain name
+# Step 2: Ask the user to enter the domain name if not entered
 if [ -z "$domain" ]; then
     echo "Enter the domain name (eg: target.com):"
     read domain
+fi
+
+# check if the output folder exists. if not, create it
+if [ ! -d "$output_dir" ]; then
+    echo "Creating output directory: $output_dir"
+    mkdir -p "$output_dir" || { echo "Failed to create output directory. Exiting..."; exit 1; }
 fi
 
 # Step 3: Get the vulnerable parameters of the given domain name using ParamSpider tool and save the output into a text file
@@ -90,7 +97,7 @@ fi
 
 # Step 4: Run the Nuclei Fuzzing templates on $domain.txt file
 echo "Running Nuclei on $output_dir/$domain.txt"
-nuclei -l $output_dir/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05
+nuclei -l $output_dir/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05 -o $output_dir/${domain}_nuclei_output.txt
 
 # Step 5: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
