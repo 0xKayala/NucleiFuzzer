@@ -44,6 +44,11 @@ Options:
 4. ./install.sh <br>
 5. nucleifuzzer -h
 
+## Practical Demonstration:
+For a Practical Demonstration of NucleiFuzzer tool see the below video 👇 <br>
+
+[<img src="https://img.youtube.com/vi/2K2gTCHt6kg/hqdefault.jpg" width="600" height="300"/>](https://www.youtube.com/embed/2K2gTCHt6kg)
+
 Made by
 `Satya Prakash` | `0xKayala` \
 
