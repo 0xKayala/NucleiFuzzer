@@ -42,6 +42,12 @@ if ! command -v nuclei &> /dev/null; then
     go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
 fi
 
+# Check if httpx is installed, if not, install it
+if ! command -v httpx &> /dev/null; then
+    echo "Installing httpx..."
+    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
+fi
+
 # Step 1: Parse command line arguments
 while [[ $# -gt 0 ]]
 do
@@ -80,7 +86,7 @@ fi
 
 # Step 4: Run the Nuclei Fuzzing templates on $domain.txt file
 echo "Running Nuclei on $domain.txt"
-nuclei -l output/$domain.txt -t "$home_dir/fuzzing-templates" -rl 05
+cat output/$domain.txt | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
 
 # Step 5: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
