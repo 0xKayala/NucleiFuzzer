@@ -39,7 +39,7 @@ fi
 # Check if nuclei is installed, if not, install it
 if ! command -v nuclei &> /dev/null; then
     echo "Installing Nuclei..."
-    go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+    go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
 fi
 
 # Check if httpx is installed, if not, install it
