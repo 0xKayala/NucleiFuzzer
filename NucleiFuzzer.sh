@@ -33,7 +33,7 @@ fi
 # Check if fuzzing-templates is already cloned.
 if [ ! -d "$home_dir/fuzzing-templates" ]; then
     echo "Cloning fuzzing-templates..."
-    git clone https://github.com/projectdiscovery/fuzzing-templates.git "$home_dir/fuzzing-templates"
+    git clone https://github.com/0xKayala/fuzzing-templates.git "$home_dir/fuzzing-templates"
 fi
 
 # Check if nuclei is installed, if not, install it
