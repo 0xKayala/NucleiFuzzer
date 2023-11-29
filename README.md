@@ -21,7 +21,7 @@
 ## Usage
 
 ```sh
-nucleifuzzer -h
+nf -h
 ```
 
 This will display help for the tool. Here are the options it supports.
@@ -42,7 +42,7 @@ Options:
 2. cd NucleiFuzzer
 3. sudo chmod +x install.sh
 4. ./install.sh <br>
-5. nucleifuzzer -h
+5. nf -h
 
 ## Practical Demonstration:
 For a Practical Demonstration of NucleiFuzzer tool see the below video 👇 <br>
