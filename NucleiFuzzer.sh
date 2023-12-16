@@ -6,7 +6,7 @@ printf "\e[91m
    / | / /_  _______/ /__  (_) ____/_  __________  ___  _____
   /  |/ / / / / ___/ / _ \/ / /_  / / / /_  /_  / / _ \/ ___/
  / /|  / /_/ / /__/ /  __/ / __/ / /_/ / / /_/ /_/  __/ /
-/_/ |_/\__,_/\___/_/\___/_/_/    \__,_/ /___/___/\___/_/
+/_/ |_/\__,_/\___/_/\___/_/_/    \__,_/ /___/___/\___/_/  v1.0.1
 
                                Made by Satya Prakash (0xKayala)
 \e[0m"
@@ -17,7 +17,8 @@ display_help() {
     echo -e "Usage: $0 [options]\n\n"
     echo "Options:"
     echo "  -h, --help              Display help information"
-    echo "  -d, --domain <domain>   Domain to scan for XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities"
+    echo "  -d, --domain <domain>   Single domain to scan for XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities"
+    echo "  -f, --file <filename>   File containing multiple domains/URLs to scan"
     exit 0
 }
 
@@ -48,7 +49,7 @@ if ! command -v httpx &> /dev/null; then
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
 fi
 
-# Step 1: Parse command line arguments
+# Parse command line arguments
 while [[ $# -gt 0 ]]
 do
     key="$1"
@@ -61,6 +62,11 @@ do
             shift
             shift
             ;;
+        -f|--file)
+            filename="$2"
+            shift
+            shift
+            ;;
         *)
             echo "Unknown option: $key"
             display_help
@@ -68,25 +74,41 @@ do
     esac
 done
 
-# Step 2: Ask the user to enter the domain name
-if [ -z "$domain" ]; then
-    echo "Enter the domain name (eg: target.com):"
-    read domain
+# Step 2: Ask the user to enter the domain name or specify the file
+if [ -z "$domain" ] && [ -z "$filename" ]; then
+    echo "Please provide a domain with -d or a file with -f option."
+    display_help
 fi
 
-# Step 3: Get the vulnerable parameters of the given domain name using ParamSpider tool and save the output into a text file
-echo "Running ParamSpider on $domain"
-python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o output/$domain.txt
+# Combined output file for all domains
+output_file="output/allurls.txt"
 
-# Check whether URLs were collected or not
-if [ ! -s output/$domain.txt ]; then
+# Step 3: Get the vulnerable parameters based on user input
+if [ -n "$domain" ]; then
+    echo "Running ParamSpider on $domain"
+    python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$domain.txt"
+    cat "output/$domain.txt" >> "$output_file"  # Append to the combined output file
+elif [ -n "$filename" ]; then
+    echo "Running ParamSpider on URLs from $filename"
+    while IFS= read -r line; do
+        python3 "$home_dir/ParamSpider/paramspider.py" -d "$line" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$line.txt"
+        cat "output/$line.txt" >> "$output_file"  # Append to the combined output file
+    done < "$filename"
+fi
+
+# Step 4: Check whether URLs were collected or not
+if [ ! -s "output/$domain.txt" ] && [ ! -s "$output_file" ]; then
     echo "No URLs Found. Exiting..."
     exit 1
 fi
 
-# Step 4: Run the Nuclei Fuzzing templates on $domain.txt file
-echo "Running Nuclei on $domain.txt"
-cat output/$domain.txt | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+# Step 5: Run the Nuclei Fuzzing templates on the collected URLs
+echo "Running Nuclei on collected URLs"
+if [ -n "$domain" ]; then
+    cat "output/$domain.txt" | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+elif [ -n "$filename" ]; then
+    cat "$output_file" | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+fi
 
-# Step 5: End with a general message as the scan is completed
+# Step 6: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
