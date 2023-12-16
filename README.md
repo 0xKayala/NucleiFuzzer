@@ -2,7 +2,7 @@
 `NucleiFuzzer` is an automation tool that combines `ParamSpider` and `Nuclei` to enhance web application security testing. It uses `ParamSpider` to identify potential entry points and `Nuclei's` templates to scan for vulnerabilities. `NucleiFuzzer` streamlines the process, making it easier for security professionals and web developers to detect and address security risks efficiently. Download `NucleiFuzzer` to protect your web applications from vulnerabilities and attacks.
 
 **Note:** `Nuclei` + `Paramspider` = `NucleiFuzzer` <br><br>
-**Important:** Make sure the tools `Nuclei` and `httpx` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
+**Important:** Make sure the tools `Nuclei`, `httpx` & `Paramspider` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
 
 ### Tools included:
 [ParamSpider](https://github.com/0xKayala/ParamSpider) `git clone https://github.com/0xKayala/ParamSpider.git`<br><br>
@@ -31,11 +31,12 @@ This will display help for the tool. Here are the options it supports.
 ```console
 NucleiFuzzer is a Powerful Automation tool for detecting XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities in Web Applications
 
-Usage: /usr/local/bin/nucleifuzzer [options]
+Usage: /usr/local/bin/nf [options]
 
 Options:
   -h, --help              Display help information
   -d, --domain <domain>   Domain to scan for XSS, SQLi, SSRF, Open-Redirect..etc vulnerabilities
+  -f, --file <filename>   File containing multiple domains/URLs to scan
 ```  
 
 ### Steps to Install:
@@ -46,7 +47,7 @@ Options:
 5. nf -h
 
 ## Practical Demonstration:
-For a Practical Demonstration of NucleiFuzzer tool see the below video 👇 <br>
+For a Practical Demonstration of the NucleiFuzzer tool see the below video 👇 <br>
 
 [<img src="https://img.youtube.com/vi/2K2gTCHt6kg/hqdefault.jpg" width="600" height="300"/>](https://www.youtube.com/embed/2K2gTCHt6kg)
 
