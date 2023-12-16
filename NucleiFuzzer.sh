@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # ASCII art
-printf "\e[91m
+echo -e "\e[91m"
+cat << "EOF"
                      __     _ ____                         
    ____  __  _______/ /__  (_) __/_  __________  ___  _____
   / __ \/ / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
@@ -9,7 +10,8 @@ printf "\e[91m
 /_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v1.0.1
 
                                Made by Satya Prakash (0xKayala)
-\e[0m"
+EOF
+echo -e "\e[0m"
 
 # Help menu
 display_help() {
