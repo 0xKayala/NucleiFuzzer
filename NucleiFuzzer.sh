@@ -25,7 +25,9 @@ display_help() {
 }
 
 # Get the current user's home directory
-home_dir=$(eval echo ~$USER)
+home_dir=$(eval echo ~"$USER")
+
+excluded_extentions="png,jpg,gif,jpeg,swf,woff,gif,svg,pdf"
 
 # Check if ParamSpider is already cloned and installed
 if [ ! -d "$home_dir/ParamSpider" ]; then
@@ -88,12 +90,12 @@ output_file="output/allurls.txt"
 # Step 3: Get the vulnerable parameters based on user input
 if [ -n "$domain" ]; then
     echo "Running ParamSpider on $domain"
-    python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$domain.txt"
+    python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude $excluded_extentions --level high --quiet -o "output/$domain.txt"
     cat "output/$domain.txt" >> "$output_file"  # Append to the combined output file
 elif [ -n "$filename" ]; then
     echo "Running ParamSpider on URLs from $filename"
     while IFS= read -r line; do
-        python3 "$home_dir/ParamSpider/paramspider.py" -d "$line" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$line.txt"
+        python3 "$home_dir/ParamSpider/paramspider.py" -d "$line" --exclude $excluded_extentions --level high --quiet -o "output/$line.txt"
         cat "output/$line.txt" >> "$output_file"  # Append to the combined output file
     done < "$filename"
 fi
@@ -107,9 +109,11 @@ fi
 # Step 5: Run the Nuclei Fuzzing templates on the collected URLs
 echo "Running Nuclei on collected URLs"
 if [ -n "$domain" ]; then
-    cat "output/$domain.txt" | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+    httpx -silent -mc 200,301,302,403 -l $output_file | 
+    nuclei -t "$home_dir/fuzzing-templates" -rl 05
 elif [ -n "$filename" ]; then
-    cat "$output_file" | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+    httpx -silent -mc 200,301,302,403 -l $output_file | 
+    nuclei -t "$home_dir/fuzzing-templates" -rl 05
 fi
 
 # Step 6: End with a general message as the scan is completed
