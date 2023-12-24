@@ -89,7 +89,6 @@ output_file="output/allurls.txt"
 if [ -n "$domain" ]; then
     echo "Running ParamSpider on $domain"
     python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$domain.txt"
-    cat "output/$domain.txt" >> "$output_file"  # Append to the combined output file
 elif [ -n "$filename" ]; then
     echo "Running ParamSpider on URLs from $filename"
     while IFS= read -r line; do
@@ -107,9 +106,9 @@ fi
 # Step 5: Run the Nuclei Fuzzing templates on the collected URLs
 echo "Running Nuclei on collected URLs"
 if [ -n "$domain" ]; then
-    cat "output/$domain.txt" | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+    cat "output/$domain.txt" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
 elif [ -n "$filename" ]; then
-    cat "$output_file" | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+    cat "$output_file" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
 fi
 
 # Step 6: End with a general message as the scan is completed
