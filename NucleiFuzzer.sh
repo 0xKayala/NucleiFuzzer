@@ -106,9 +106,9 @@ fi
 # Step 5: Run the Nuclei Fuzzing templates on the collected URLs
 echo "Running Nuclei on collected URLs"
 if [ -n "$domain" ]; then
-    cat "output/$domain.txt" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+    sort "output/$domain.txt" | uniq | tee "output/$domain.txt" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
 elif [ -n "$filename" ]; then
-    cat "$output_file" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+    sort "$output_file" | uniq | tee "$output_file" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
 fi
 
 # Step 6: End with a general message as the scan is completed
