@@ -20,7 +20,7 @@
 
 # Output
 ![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/466861be-34a0-48f2-8c70-dda2406d7fde)
-![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/bf911936-1eed-42bc-b81f-35d71a8ebf49)
+![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/2b204838-d3ed-4408-9920-ba99a9c528a2)
 
 ## Usage
 
