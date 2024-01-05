@@ -31,7 +31,6 @@ nf -h
 
 This will display help for the tool. Here are the options it supports.
 
-
 ```console
 NucleiFuzzer is a Powerful Automation tool for detecting XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities in Web Applications
 
@@ -43,17 +42,49 @@ Options:
   -f, --file <filename>   File containing multiple domains/URLs to scan
 ```  
 
-### Steps to Install:
-1. git clone https://github.com/0xKayala/NucleiFuzzer.git
-2. cd NucleiFuzzer
-3. sudo chmod +x install.sh
-4. ./install.sh <br>
-5. nf -h
+## Installation:
+To install `NucleiFuzzer`, follow these steps:
+```
+git clone https://github.com/0xKayala/NucleiFuzzer.git
+cd NucleiFuzzer
+sudo chmod +x install.sh
+./install.sh <br>
+nf -h
+```
+
+## Examples:
+Here are a few examples of how to use NucleiFuzzer:
+
+- Run `NucleiFuzzer` on a single domain:
+
+  ```sh
+  nf -d example.com
+  ```
+
+- Run `NucleiFuzzer` on multiple domains from a file:
+
+  ```sh
+  nf -f file.txt
+  ```
 
 ## Practical Demonstration:
+
 For a Practical Demonstration of the NucleiFuzzer tool see the below video 👇 <br>
 
 [<img src="https://img.youtube.com/vi/2K2gTCHt6kg/hqdefault.jpg" width="600" height="300"/>](https://www.youtube.com/embed/2K2gTCHt6kg)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=0xKayala/NucleiFuzzer&type=Date)](https://star-history.com/#0xKayala/NucleiFuzzer&Date)
+
+## Contributing
+
+Contributions are welcome! If you'd like to contribute to `NucleiFuzzer`, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch.
+3. Make your changes and commit them.
+4. Submit a pull request.
 
 Made by
 `Satya Prakash` | `0xKayala` \
