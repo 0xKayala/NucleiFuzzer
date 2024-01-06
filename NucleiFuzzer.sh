@@ -1,7 +1,11 @@
 #!/bin/bash
 
+# ANSI color codes
+RED='\033[91m'
+RESET='\033[0m'
+
 # ASCII art
-echo -e "\e[91m"
+echo -e "${RED}"
 cat << "EOF"
                      __     _ ____                         
    ____  __  _______/ /__  (_) __/_  __________  ___  _____
@@ -11,7 +15,7 @@ cat << "EOF"
 
                                Made by Satya Prakash (0xKayala)
 EOF
-echo -e "\e[0m"
+echo -e "${RESET}"
 
 # Help menu
 display_help() {
