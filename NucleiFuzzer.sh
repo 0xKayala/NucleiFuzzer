@@ -25,7 +25,9 @@ display_help() {
 }
 
 # Get the current user's home directory
-home_dir=$(eval echo ~$USER)
+home_dir=$(eval echo ~"$USER")
+
+excluded_extentions="png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt"
 
 # Check if ParamSpider is already cloned and installed
 if [ ! -d "$home_dir/ParamSpider" ]; then
@@ -88,11 +90,11 @@ output_file="output/allurls.txt"
 # Step 3: Get the vulnerable parameters based on user input
 if [ -n "$domain" ]; then
     echo "Running ParamSpider on $domain"
-    python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$domain.txt"
+    python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude "$excluded_extentions" --level high --quiet -o "output/$domain.txt"
 elif [ -n "$filename" ]; then
     echo "Running ParamSpider on URLs from $filename"
     while IFS= read -r line; do
-        python3 "$home_dir/ParamSpider/paramspider.py" -d "$line" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$line.txt"
+        python3 "$home_dir/ParamSpider/paramspider.py" -d "$line" --exclude "$excluded_extentions" --level high --quiet -o "output/$line.txt"
         cat "output/$line.txt" >> "$output_file"  # Append to the combined output file
     done < "$filename"
 fi
