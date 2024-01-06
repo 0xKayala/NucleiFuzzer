@@ -1,4 +1,7 @@
-# NucleiFuzzer = Nuclei + Paramspider
+<h1 align="center"> 
+  NucleiFuzzer = Nuclei + Paramspider
+  <br>
+</h1>
 
 <p align="center">
 <a href="https://github.com/0xKayala/NucleiFuzzer/issues"><img src="https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat"></a>
