@@ -1,7 +1,11 @@
 #!/bin/bash
 
+# ANSI color codes
+RED='\033[91m'
+RESET='\033[0m'
+
 # ASCII art
-echo -e "\e[91m"
+echo -e "${RED}"
 cat << "EOF"
                      __     _ ____                         
    ____  __  _______/ /__  (_) __/_  __________  ___  _____
@@ -11,49 +15,57 @@ cat << "EOF"
 
                                Made by Satya Prakash (0xKayala)
 EOF
-echo -e "\e[0m"
+echo -e "${RESET}"
 
 # Help menu
 display_help() {
-    echo -e "NucleiFuzzer is a Powerful Automation tool for detecting XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities in Web Applications\n\n"
-    echo -e "Usage: $0 [options]\n\n"
-    echo "Options:"
-    echo "  -h, --help              Display help information"
-    echo "  -d, --domain <domain>   Single domain to scan for XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities"
-    echo "  -f, --file <filename>   File containing multiple domains/URLs to scan"
+    cat <<EOF
+
+NucleiFuzzer is a Powerful Automation tool for detecting vulnerabilities in Web Applications
+
+Usage: $0 [options]
+
+Options:
+  -h, --help              Display help information
+  -d, --domain <domain>   Single domain to scan for vulnerabilities
+  -f, --file <filename>   File containing multiple domains/URLs to scan
+
+EOF
     exit 0
 }
 
 # Get the current user's home directory
 home_dir=$(eval echo ~$USER)
 
-# Check if ParamSpider is already cloned and installed
-if [ ! -d "$home_dir/ParamSpider" ]; then
-    echo "Cloning ParamSpider..."
-    git clone https://github.com/0xKayala/ParamSpider "$home_dir/ParamSpider"
-fi
+# Function to clone a repository if not already cloned
+clone_repo() {
+    local repo_url=$1
+    local repo_dir=$2
+    if [ ! -d "$home_dir/$repo_dir" ]; then
+        echo "Cloning $repo_dir..."
+        git clone "$repo_url" "$home_dir/$repo_dir"
+    fi
+}
 
-# Check if fuzzing-templates is already cloned.
-if [ ! -d "$home_dir/fuzzing-templates" ]; then
-    echo "Cloning fuzzing-templates..."
-    git clone https://github.com/0xKayala/fuzzing-templates.git "$home_dir/fuzzing-templates"
-fi
+# Clone required repositories
+clone_repo "https://github.com/0xKayala/ParamSpider" "ParamSpider"
+clone_repo "https://github.com/0xKayala/fuzzing-templates.git" "fuzzing-templates"
 
-# Check if nuclei is installed, if not, install it
-if ! command -v nuclei &> /dev/null; then
-    echo "Installing Nuclei..."
-    go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-fi
+# Function to install a tool if not already installed
+install_tool() {
+    local tool_name=$1
+    if ! command -v $tool_name &> /dev/null; then
+        echo "Installing $tool_name..."
+        go install -v "github.com/projectdiscovery/$tool_name/v3/cmd/$tool_name@latest"
+    fi
+}
 
-# Check if httpx is installed, if not, install it
-if ! command -v httpx &> /dev/null; then
-    echo "Installing httpx..."
-    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
-fi
+# Install required tools
+install_tool "nuclei"
+install_tool "httpx"
 
 # Parse command line arguments
-while [[ $# -gt 0 ]]
-do
+while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
         -h|--help)
@@ -85,15 +97,25 @@ fi
 # Combined output file for all domains
 output_file="output/allurls.txt"
 
+
 # Step 3: Get the vulnerable parameters based on user input
+run_paramspider() {
+    local input=$1
+    local output=$2
+    python3 "$home_dir/ParamSpider/paramspider.py" -d "$input" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "$output"
+}
+
+
 if [ -n "$domain" ]; then
     echo "Running ParamSpider on $domain"
-    python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$domain.txt"
+    run_paramspider "$domain" "output/$domain.txt"
 elif [ -n "$filename" ]; then
     echo "Running ParamSpider on URLs from $filename"
-    while IFS= read -r line; do
-        python3 "$home_dir/ParamSpider/paramspider.py" -d "$line" --exclude png,jpg,gif,jpeg,swf,woff,gif,svg --level high --quiet -o "output/$line.txt"
-        cat "output/$line.txt" >> "$output_file"  # Append to the combined output file
+    while IFS= read -r line || [ -n "$line" ]; do
+        if [ -n "$line" ]; then
+            run_paramspider "$line" "output/$line.txt"
+            cat "output/$line.txt" >> "$output_file"
+        fi
     done < "$filename"
 fi
 
@@ -113,3 +135,4 @@ fi
 
 # Step 6: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
+
