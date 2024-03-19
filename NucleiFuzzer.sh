@@ -29,7 +29,7 @@ display_help() {
 }
 
 # Get the current user's home directory
-home_dir=$(eval echo ~"$USER")
+home_dir=$HOME
 
 excluded_extentions="png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt"
 
