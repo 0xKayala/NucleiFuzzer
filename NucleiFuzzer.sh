@@ -29,7 +29,7 @@ display_help() {
 }
 
 # Get the current user's home directory
-home_dir=$HOME
+home_dir=$(eval echo ~"$USER")
 
 excluded_extentions="png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt"
 
@@ -112,9 +112,9 @@ fi
 # Step 5: Run the Nuclei Fuzzing templates on the collected URLs
 echo "Running Nuclei on collected URLs"
 if [ -n "$domain" ]; then
-    sort "output/$domain.txt" | uniq | tee "output/$domain.txt" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+    sort "output/$domain.txt" | uniq | tee "output/$domain.txt" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
 elif [ -n "$filename" ]; then
-    sort "$output_file" | uniq | tee "$output_file" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -rl 05
+    sort "$output_file" | uniq | tee "$output_file" | httpx -silent -mc 200,301,302 | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
 fi
 
 # Step 6: End with a general message as the scan is completed
