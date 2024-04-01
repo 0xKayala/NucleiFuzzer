@@ -46,13 +46,13 @@ if [ ! -d "$home_dir/fuzzing-templates" ]; then
 fi
 
 # Check if nuclei is installed, if not, install it
-if ! command -v nuclei &> /dev/null; then
+if ! command -v nuclei -up &> /dev/null; then
     echo "Installing Nuclei..."
     go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
 fi
 
 # Check if httpx is installed, if not, install it
-if ! command -v httpx &> /dev/null; then
+if ! command -v httpx -up &> /dev/null; then
     echo "Installing httpx..."
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
 fi
