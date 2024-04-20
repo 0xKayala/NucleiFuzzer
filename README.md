@@ -57,7 +57,7 @@ Options:
 To install `NucleiFuzzer`, follow these steps:
 
 ```
-git clone https://github.com/0xKayala/NucleiFuzzer.git && cd NucleiFuzzer && sudo chmod +x install.sh && ./install.sh && nf -h && cd..
+git clone https://github.com/0xKayala/NucleiFuzzer.git && cd NucleiFuzzer && sudo chmod +x install.sh && ./install.sh && nf -h && cd ..
 ```
 
 ## Examples:
