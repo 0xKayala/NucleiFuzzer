@@ -112,9 +112,15 @@ fi
 # Step 5: Run the Nuclei Fuzzing templates on the collected URLs
 echo "Running Nuclei on collected URLs"
 if [ -n "$domain" ]; then
-    sort "output/$domain.yaml" | uniq | tee "output/$domain.yaml" | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
+    # Use a temporary file to store the sorted and unique URLs
+    temp_file=$(mktemp)
+    sort "output/$domain.yaml" | uniq > "$temp_file"
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
+    sudo rm -r "$temp_file"  # Remove the temporary file
 elif [ -n "$filename" ]; then
-    sort "$output_file" | uniq | tee "$output_file" | httpx -silent -mc 200,301,302,403 | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
+    sort "$output_file" | uniq > "$temp_file"
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
+    sudo rm -r "$temp_file"  # Remove the temporary file
 fi
 
 # Step 6: End with a general message as the scan is completed
