@@ -98,8 +98,8 @@ if [ -n "$domain" ]; then
 elif [ -n "$filename" ]; then
     echo "Running ParamSpider on URLs from $filename"
     while IFS= read -r line; do
-        python3 "$home_dir/ParamSpider/paramspider.py" -d "$line" --exclude "$excluded_extentions" --level high --quiet -o "output/$line.yaml"
-        cat "output/$line.yaml" >> "$output_file"  # Append to the combined output file
+        python3 "$home_dir/ParamSpider/paramspider.py" -d "$line" --exclude "$excluded_extentions" --level high --quiet -o "output/${line}.yaml"
+        cat "output/${line}.yaml" >> "$output_file"  # Append to the combined output file
     done < "$filename"
 fi
 
