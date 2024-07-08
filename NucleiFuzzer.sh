@@ -116,11 +116,11 @@ if [ -n "$domain" ]; then
     temp_file=$(mktemp)
     sort "output/$domain.yaml" | uniq > "$temp_file"
     httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
-    rm -r "$temp_file"  # Remove the temporary file
+    rm "$temp_file"  # Remove the temporary file
 elif [ -n "$filename" ]; then
     sort "$output_file" | uniq > "$temp_file"
     httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
-    rm -r "$temp_file"  # Remove the temporary file
+    rm "$temp_file"  # Remove the temporary file
 fi
 
 # Step 6: End with a general message as the scan is completed
