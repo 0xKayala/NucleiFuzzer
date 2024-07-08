@@ -82,7 +82,7 @@ do
     esac
 done
 
-# Step 2: Ask the user to enter the domain name or specify the file
+# Step 1: Ask the user to enter the domain name or specify the file
 if [ -z "$domain" ] && [ -z "$filename" ]; then
     echo "Please provide a domain with -d or a file with -f option."
     display_help
@@ -91,7 +91,7 @@ fi
 # Combined output file for all domains
 output_file="output/allurls.yaml"
 
-# Step 3: Get the vulnerable parameters based on user input
+# Step 2: Get the vulnerable parameters based on user input
 if [ -n "$domain" ]; then
     echo "Running ParamSpider on $domain"
     python3 "$home_dir/ParamSpider/paramspider.py" -d "$domain" --exclude "$excluded_extentions" --level high --quiet -o "output/$domain.yaml"
@@ -103,25 +103,27 @@ elif [ -n "$filename" ]; then
     done < "$filename"
 fi
 
-# Step 4: Check whether URLs were collected or not
-if [ ! -s "output/$domain.yaml" ] && [ ! -s "$output_file" ]; then
-    echo "No URLs Found. Exiting..."
+# Step 3: Check whether URLs were collected or not
+if [ -n "$domain" ] && [ ! -s "output/$domain.yaml" ]; then
+    echo "No URLs found for the domain $domain. Exiting..."
+    exit 1
+elif [ -n "$filename" ] && [ ! -s "$output_file" ]; then
+    echo "No URLs found in the file $filename. Exiting..."
     exit 1
 fi
 
-# Step 5: Run the Nuclei Fuzzing templates on the collected URLs
+# Step 4: Run the Nuclei Fuzzing templates on the collected URLs
 echo "Running Nuclei on collected URLs"
+temp_file=$(mktemp)
 if [ -n "$domain" ]; then
     # Use a temporary file to store the sorted and unique URLs
-    temp_file=$(mktemp)
     sort "output/$domain.yaml" | uniq > "$temp_file"
     httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
-    rm "$temp_file"  # Remove the temporary file
 elif [ -n "$filename" ]; then
     sort "$output_file" | uniq > "$temp_file"
     httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
-    rm "$temp_file"  # Remove the temporary file
 fi
+rm "$temp_file"  # Remove the temporary file
 
 # Step 6: End with a general message as the scan is completed
 echo "Scan is completed - Happy Fuzzing"
