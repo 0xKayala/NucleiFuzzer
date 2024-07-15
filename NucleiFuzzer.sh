@@ -39,12 +39,6 @@ if [ ! -d "$home_dir/ParamSpider" ]; then
     git clone https://github.com/0xKayala/ParamSpider "$home_dir/ParamSpider"
 fi
 
-# Check if fuzzing-templates is already cloned.
-if [ ! -d "$home_dir/fuzzing-templates" ]; then
-    echo "Cloning fuzzing-templates..."
-    git clone https://github.com/0xKayala/fuzzing-templates.git "$home_dir/fuzzing-templates"
-fi
-
 # Check if nuclei is installed, if not, install it
 if ! command -v nuclei -up &> /dev/null; then
     echo "Installing Nuclei..."
@@ -118,10 +112,10 @@ temp_file=$(mktemp)
 if [ -n "$domain" ]; then
     # Use a temporary file to store the sorted and unique URLs
     sort "output/$domain.yaml" | uniq > "$temp_file"
-    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -dast -rl 05
 elif [ -n "$filename" ]; then
     sort "$output_file" | uniq > "$temp_file"
-    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -dast -fuzz -rl 05
 fi
 rm "$temp_file"  # Remove the temporary file
 
