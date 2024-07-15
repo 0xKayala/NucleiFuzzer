@@ -39,10 +39,10 @@ if [ ! -d "$home_dir/ParamSpider" ]; then
     git clone https://github.com/0xKayala/ParamSpider "$home_dir/ParamSpider"
 fi
 
-# Check if fuzzing-templates is already cloned.
-if [ ! -d "$home_dir/fuzzing-templates" ]; then
+# Check if nuclei fuzzing-templates are already cloned.
+if [ ! -d "$home_dir/nuclei-templates" ]; then
     echo "Cloning fuzzing-templates..."
-    git clone https://github.com/0xKayala/fuzzing-templates.git "$home_dir/fuzzing-templates"
+    git clone https://github.com/0xKayala/nuclei-templates.git "$home_dir/nuclei-templates"
 fi
 
 # Check if nuclei is installed, if not, install it
@@ -118,12 +118,12 @@ temp_file=$(mktemp)
 if [ -n "$domain" ]; then
     # Use a temporary file to store the sorted and unique URLs
     sort "output/$domain.yaml" | uniq > "$temp_file"
-    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05
 elif [ -n "$filename" ]; then
     sort "$output_file" | uniq > "$temp_file"
-    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/fuzzing-templates" -fuzz -rl 05
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05
 fi
 rm "$temp_file"  # Remove the temporary file
 
 # Step 6: End with a general message as the scan is completed
-echo "Scan is completed - Happy Fuzzing"
+echo "Scanning is completed - Happy Fuzzing"
