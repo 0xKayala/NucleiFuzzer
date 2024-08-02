@@ -25,6 +25,8 @@ display_help() {
     echo "  -h, --help              Display help information"
     echo "  -d, --domain <domain>   Single domain to scan for XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities"
     echo "  -f, --file <filename>   File containing multiple domains/URLs to scan"
+    echo "  -o, --output <filename>   Output file"
+
     exit 0
 }
 
@@ -82,6 +84,11 @@ do
             shift
             shift
             ;;
+        -o|--output)
+            output="$2"
+            shift
+            shift
+            ;;
         *)
             echo "Unknown option: $key"
             display_help
@@ -125,10 +132,10 @@ temp_file=$(mktemp)
 if [ -n "$domain" ]; then
     # Use a temporary file to store the sorted and unique URLs
     sort "output/$domain.yaml" | uniq | uro > "$temp_file"
-    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 $( [ -n "$output" ] && echo "-o $output" )
 elif [ -n "$filename" ]; then
     sort "$output_file" | uniq > "$temp_file"
-    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 $( [ -n "$output" ] && echo "-o $output" )
 fi
 rm "$temp_file"  # Remove the temporary file
 

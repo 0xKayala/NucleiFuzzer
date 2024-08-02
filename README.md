@@ -49,6 +49,8 @@ Options:
   -h, --help              Display help information
   -d, --domain <domain>   Domain to scan for XSS, SQLi, SSRF, Open-Redirect..etc vulnerabilities
   -f, --file <filename>   File containing multiple domains/URLs to scan
+  -o, --output <filename> Output file
+
 ```  
 
 ## Installation:
