@@ -7,11 +7,11 @@ RESET='\033[0m'
 # ASCII art
 echo -e "${RED}"
 cat << "EOF"
-    _   __           __     _ ____                         
-   / | / /_  _______/ /__  (_) __/_  __________  ___  _____
-  /  |/ / / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
- / /|  / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /    
-/_/ |_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v1.0.3
+                     __     _ ____                         
+   ____  __  _______/ /__  (_) __/_  __________  ___  _____
+  / __ \/ / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
+ / / / / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /    
+/_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v1.0.3
 
                                Made by Satya Prakash (0xKayala)
 EOF
@@ -42,7 +42,7 @@ fi
 # Check if nuclei fuzzing-templates are already cloned.
 if [ ! -d "$home_dir/nuclei-templates" ]; then
     echo "Cloning fuzzing-templates..."
-    git clone https://github.com/0xKayala/nuclei-templates.git "$home_dir/nuclei-templates"
+    git clone https://github.com/projectdiscovery/nuclei-templates.git "$home_dir/nuclei-templates"
 fi
 
 # Check if nuclei is installed, if not, install it
