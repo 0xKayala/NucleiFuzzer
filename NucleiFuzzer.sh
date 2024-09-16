@@ -25,6 +25,8 @@ display_help() {
     echo "  -h, --help              Display help information"
     echo "  -d, --domain <domain>   Single domain to scan for XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities"
     echo "  -f, --file <filename>   File containing multiple domains/URLs to scan"
+    echo "  -o, --output <filename>   Output file"
+
     exit 0
 }
 
@@ -57,6 +59,13 @@ if ! command -v httpx -up &> /dev/null; then
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
 fi
 
+# Check if uro is installed, if not, install it
+if ! command -v uro -up &> /dev/null; then
+    echo "Installing Uro..."
+    pip3 install uro
+fi
+
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]
 do
@@ -72,6 +81,11 @@ do
             ;;
         -f|--file)
             filename="$2"
+            shift
+            shift
+            ;;
+        -o|--output)
+            output="$2"
             shift
             shift
             ;;
@@ -117,11 +131,11 @@ echo "Running Nuclei on collected URLs"
 temp_file=$(mktemp)
 if [ -n "$domain" ]; then
     # Use a temporary file to store the sorted and unique URLs
-    sort "output/$domain.yaml" | uniq > "$temp_file"
-    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05
+    sort "output/$domain.yaml" | uniq | uro > "$temp_file"
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 $( [ -n "$output" ] && echo "-o $output" )
 elif [ -n "$filename" ]; then
     sort "$output_file" | uniq > "$temp_file"
-    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05
+    httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 $( [ -n "$output" ] && echo "-o $output" )
 fi
 rm "$temp_file"  # Remove the temporary file
 
