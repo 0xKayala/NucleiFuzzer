@@ -57,6 +57,11 @@ if ! command -v httpx -up &> /dev/null; then
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest
 fi
 
+if ! command -v uro -up &> /dev/null; then
+    echo "Installing uro..."
+    pip3 install uro
+fi
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]
 do
@@ -117,10 +122,10 @@ echo "Running Nuclei on collected URLs"
 temp_file=$(mktemp)
 if [ -n "$domain" ]; then
     # Use a temporary file to store the sorted and unique URLs
-    sort "output/$domain.yaml" | uniq > "$temp_file"
+    sort "output/$domain.yaml" | uro > "$temp_file"
     httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05
 elif [ -n "$filename" ]; then
-    sort "$output_file" | uniq > "$temp_file"
+    sort "$output_file" | uro > "$temp_file"
     httpx -silent -mc 200,301,302,403 -l "$temp_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05
 fi
 rm "$temp_file"  # Remove the temporary file
