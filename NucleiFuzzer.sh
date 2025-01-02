@@ -12,7 +12,7 @@ cat << "EOF"
    ____  __  _______/ /__  (_) __/_  __________  ___  _____
   / __ \/ / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
  / / / / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /    
-/_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v2.1
+/_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v2.1.0
 
                                Made by Satya Prakash (0xKayala)
 EOF
@@ -108,7 +108,7 @@ mkdir -p "$output_folder"
 run_paramspider() {
     local target=$1
     local output_file=$2
-    echo -e "${GREEN}Running ParamSpider on $target...${RESET}"
+    echo -e "${RED}Running ParamSpider on $target...${RESET}"
     python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
 }
 
@@ -141,7 +141,7 @@ fi
 # Step 3: Run Nuclei templates
 run_nuclei() {
     local url_file=$1
-    echo -e "${GREEN}Running Nuclei on URLs from $url_file...${RESET}"
+    echo -e "${RED}Running Nuclei on URLs from $url_file...${RESET}"
     httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 -o "$output_folder/nuclei_results.txt"
 }
 
@@ -152,4 +152,4 @@ elif [ -n "$filename" ]; then
 fi
 
 # Step 4: Completion message
-echo -e "${GREEN}NucleiFuzzing is completed. Results are saved in $output_folder.${RESET}"
+echo -e "${RED}NucleiFuzzing is completed. The Results are saved in $output_folder.${RED}"
