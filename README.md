@@ -55,7 +55,7 @@ Options:
 To install `NucleiFuzzer`, follow these steps:
 
 ```
-git clone https://github.com/0xKayala/NucleiFuzzer.git && cd NucleiFuzzer && sudo chmod +x install.sh && ./install.sh && nf -h && cd ..
+git clone https://github.com/0xKayala/NucleiFuzzer.git && cd NucleiFuzzer && sudo chmod +x install.sh && ./install.sh && (command -v nf &> /dev/null && nf -h || echo "Installation failed: Command 'nf' not found. Please check for errors during installation.") && cd .. || echo "Failed to clone or navigate to NucleiFuzzer repository. Please check your setup."
 ```
 
 ## Examples:
