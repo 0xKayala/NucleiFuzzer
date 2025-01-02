@@ -1,5 +1,5 @@
 <h1 align="center"> 
-  NucleiFuzzer = Nuclei + Paramspider
+  NucleiFuzzer = Nuclei + Paramspider + Fuzzing Templates
   <br>
 </h1>
 
@@ -9,10 +9,10 @@
 <a href="https://twitter.com/0xKayala"><img src="https://img.shields.io/twitter/follow/0xKayala.svg?logo=twitter"></a>
 </p>
 
-`NucleiFuzzer` is an automation tool that combines `ParamSpider` and `Nuclei` to enhance web application security testing. It uses `ParamSpider` to identify potential entry points and `Nuclei` fuzzing templates to scan for vulnerabilities. `NucleiFuzzer` streamlines the process, making it easier for security professionals and web developers to detect and address security risks efficiently. Download `NucleiFuzzer` to protect your web applications from vulnerabilities and attacks.
+`NucleiFuzzer` is an automation tool that combines `ParamSpider` and `Nuclei` to enhance web application security testing. It uses `ParamSpider` to identify potential entry points and `Nuclei` fuzzing templates to scan for vulnerabilities. `NucleiFuzzer` streamlines the process, making it easier for security professionals and web developers to detect and address security risks efficiently. Download `Nuclei Fuzzer` to protect your web applications from vulnerabilities and attacks.
 
-**Note:** `Nuclei` + `Paramspider` = `NucleiFuzzer` <br><br>
-**Important:** Make sure the tools `Nuclei`, `httpx` & `Paramspider` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
+**Note:** `Nuclei` + `Paramspider` + `Fuzzing Templates` = `NucleiFuzzer` <br><br>
+**Important:** Make sure the tools `Nuclei`, `httpx`, `uro` & `Paramspider` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
 
 ### Tools included:
 [ParamSpider](https://github.com/0xKayala/ParamSpider) `git clone https://github.com/0xKayala/ParamSpider.git`<br><br>
