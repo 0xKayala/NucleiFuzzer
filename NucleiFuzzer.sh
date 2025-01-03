@@ -52,7 +52,7 @@ check_prerequisite() {
 check_prerequisite "nuclei" "go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
 check_prerequisite "httpx" "go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest"
 check_prerequisite "uro" "pip3 install uro"
-check_prerequisite "katana" "CGO_ENABLED=1 go install github.com/projectdiscovery/katana/cmd/katana@latest"
+check_prerequisite "katana" "go install -v github.com/projectdiscovery/katana/cmd/katana@latest"
 check_prerequisite "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
 check_prerequisite "gauplus" "go install github.com/bp0lr/gauplus@latest"
 check_prerequisite "hakrawler" "go install github.com/hakluke/hakrawler@latest"
@@ -120,9 +120,9 @@ collect_urls() {
     echo "$target" | gauplus >> "$output_file"
     echo "$target" | hakrawler -d 3 -subs -u >> "$output_file"
     echo "$target" | katana -d 3 -silent >> "$output_file"
-    waymore -u "$target" -o "$output_file.waymore"
+    waymore -i "$target" -oU "$output_file.waymore"
     cat "$output_file.waymore" >> "$output_file"
-    rm "$output_file.waymore"
+    rm -f "$output_file.waymore"
 }
 
 if [ -n "$domain" ]; then
@@ -157,7 +157,7 @@ fi
 run_nuclei() {
     local url_file=$1
 
-    echo -e "${RED}Running Nuclei on URLs from $url_file...${RESET}"
+    echo -e "${GREEN}Running Nuclei on URLs from $url_file...${RESET}"
     httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" \
         | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 -o "$output_folder/nuclei_results.txt"
 }
@@ -169,4 +169,4 @@ elif [ -n "$filename" ]; then
 fi
 
 # Step 4: Completion message
-echo -e "${RED}Scanning completed. Results are saved in $output_folder.${RESET}"
+echo -e "${GREEN}Scanning completed. Results are saved in $output_folder.${RESET}"
