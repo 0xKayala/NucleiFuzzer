@@ -12,7 +12,7 @@ cat << "EOF"
    ____  __  _______/ /__  (_) __/_  __________  ___  _____
   / __ \/ / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
  / / / / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /    
-/_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v2.1.0
+/_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v2.2.0
 
                                Made by Satya Prakash (0xKayala)
 EOF
@@ -52,6 +52,11 @@ check_prerequisite() {
 check_prerequisite "nuclei" "go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
 check_prerequisite "httpx" "go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest"
 check_prerequisite "uro" "pip3 install uro"
+check_prerequisite "katana" "go install -v github.com/projectdiscovery/katana/cmd/katana@latest"
+check_prerequisite "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
+check_prerequisite "gauplus" "go install github.com/bp0lr/gauplus@latest"
+check_prerequisite "hakrawler" "go install github.com/hakluke/hakrawler@latest"
+check_prerequisite "waymore" "pip3 install waymore"
 
 # Clone repositories if not present
 clone_repo() {
@@ -104,52 +109,64 @@ fi
 # Ensure output folder exists
 mkdir -p "$output_folder"
 
-# Step 1: Run ParamSpider to collect URLs
-run_paramspider() {
+# Step 1: Run URL collection tools
+collect_urls() {
     local target=$1
     local output_file=$2
-    echo -e "${RED}Running ParamSpider on $target...${RESET}"
+
+    echo -e "${GREEN}Collecting URLs for $target...${RESET}"
     python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
+    echo "$target" | waybackurls >> "$output_file"
+    echo "$target" | gauplus >> "$output_file"
+    echo "$target" | hakrawler -depth 3 -plain >> "$output_file"
+    echo "$target" | katana -d 3 -silent >> "$output_file"
+    waymore -u "$target" -o "$output_file.waymore"
+    cat "$output_file.waymore" >> "$output_file"
+    rm "$output_file.waymore"
 }
 
 if [ -n "$domain" ]; then
-    run_paramspider "$domain" "$output_folder/$domain.yaml"
+    collect_urls "$domain" "$output_folder/$domain_raw.txt"
 elif [ -n "$filename" ]; then
     while IFS= read -r line; do
-        run_paramspider "$line" "$output_folder/${line}.yaml"
-        cat "$output_folder/${line}.yaml" >> "$output_folder/all_urls.yaml"
+        collect_urls "$line" "$output_folder/${line}_raw.txt"
+        cat "$output_folder/${line}_raw.txt" >> "$output_folder/all_raw.txt"
     done < "$filename"
 fi
 
-# Step 2: Validate collected URLs
+# Step 2: Validate and deduplicate URLs
 validate_urls() {
     local input_file=$1
     local validated_file=$2
+
     if [ ! -s "$input_file" ]; then
         echo -e "${RED}Error: No URLs found in $input_file. Exiting...${RESET}"
         exit 1
     fi
+
     sort "$input_file" | uro > "$validated_file"
 }
 
 if [ -n "$domain" ]; then
-    validate_urls "$output_folder/$domain.yaml" "$output_folder/${domain}_validated.yaml"
+    validate_urls "$output_folder/$domain_raw.txt" "$output_folder/${domain}_validated.txt"
 elif [ -n "$filename" ]; then
-    validate_urls "$output_folder/all_urls.yaml" "$output_folder/all_validated.yaml"
+    validate_urls "$output_folder/all_raw.txt" "$output_folder/all_validated.txt"
 fi
 
 # Step 3: Run Nuclei templates
 run_nuclei() {
     local url_file=$1
+
     echo -e "${RED}Running Nuclei on URLs from $url_file...${RESET}"
-    httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 -o "$output_folder/nuclei_results.txt"
+    httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" \
+        | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 -o "$output_folder/nuclei_results.txt"
 }
 
 if [ -n "$domain" ]; then
-    run_nuclei "$output_folder/${domain}_validated.yaml"
+    run_nuclei "$output_folder/${domain}_validated.txt"
 elif [ -n "$filename" ]; then
-    run_nuclei "$output_folder/all_validated.yaml"
+    run_nuclei "$output_folder/all_validated.txt"
 fi
 
 # Step 4: Completion message
-echo -e "${RED}NucleiFuzzing is completed. The Results are saved in $output_folder.${RED}"
+echo -e "${RED}Scanning completed. Results are saved in $output_folder.${RESET}"
