@@ -52,7 +52,7 @@ check_prerequisite() {
 check_prerequisite "nuclei" "go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
 check_prerequisite "httpx" "go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest"
 check_prerequisite "uro" "pip3 install uro"
-check_prerequisite "katana" "go install -v github.com/projectdiscovery/katana/cmd/katana@latest"
+check_prerequisite "katana" "CGO_ENABLED=1 go install github.com/projectdiscovery/katana/cmd/katana@latest"
 check_prerequisite "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
 check_prerequisite "gauplus" "go install github.com/bp0lr/gauplus@latest"
 check_prerequisite "hakrawler" "go install github.com/hakluke/hakrawler@latest"
