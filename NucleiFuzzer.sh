@@ -118,7 +118,7 @@ collect_urls() {
     python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
     echo "$target" | waybackurls >> "$output_file"
     echo "$target" | gauplus >> "$output_file"
-    echo "$target" | hakrawler -depth 3 -plain >> "$output_file"
+    echo "$target" | hakrawler -d 3 -plain >> "$output_file"
     echo "$target" | katana -d 3 -silent >> "$output_file"
     waymore -u "$target" -o "$output_file.waymore"
     cat "$output_file.waymore" >> "$output_file"
