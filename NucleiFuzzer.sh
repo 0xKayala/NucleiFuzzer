@@ -56,7 +56,6 @@ check_prerequisite "katana" "go install -v github.com/projectdiscovery/katana/cm
 check_prerequisite "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
 check_prerequisite "gauplus" "go install github.com/bp0lr/gauplus@latest"
 check_prerequisite "hakrawler" "go install github.com/hakluke/hakrawler@latest"
-check_prerequisite "waymore" "pip3 install waymore"
 
 # Clone repositories if not present
 clone_repo() {
@@ -114,15 +113,12 @@ collect_urls() {
     local target=$1
     local output_file=$2
 
-    echo -e "${GREEN}Collecting URLs for $target...${RESET}"
+    echo -e "${RED}Collecting URLs for $target...${RESET}"
     python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
     echo "$target" | waybackurls >> "$output_file"
-    echo "$target" | gauplus >> "$output_file"
+    echo "$target" | gauplus -subs -b png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt >> "$output_file"
     echo "$target" | hakrawler -d 3 -subs -u >> "$output_file"
     echo "$target" | katana -d 3 -silent >> "$output_file"
-    waymore -i "$target" -oU "$output_file.waymore"
-    cat "$output_file.waymore" >> "$output_file"
-    rm -f "$output_file.waymore"
 }
 
 if [ -n "$domain" ]; then
@@ -157,7 +153,7 @@ fi
 run_nuclei() {
     local url_file=$1
 
-    echo -e "${GREEN}Running Nuclei on URLs from $url_file...${RESET}"
+    echo -e "${RED}Running Nuclei on URLs from $url_file...${RESET}"
     httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" \
         | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 -o "$output_folder/nuclei_results.txt"
 }
@@ -169,4 +165,4 @@ elif [ -n "$filename" ]; then
 fi
 
 # Step 4: Completion message
-echo -e "${GREEN}Scanning completed. Results are saved in $output_folder.${RESET}"
+echo -e "${RED}Scanning completed. Results are saved in $output_folder.${RESET}"
