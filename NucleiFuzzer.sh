@@ -187,7 +187,7 @@ fi
 run_nuclei() {
     local url_file=$1
 
-    echo -e "${RED}Running Nuclei on URLs from $url_file with severity levels: $severity_levels...${RESET}"
+    echo -e "${GREEN}Running Nuclei on URLs from $url_file with severity levels: $severity_levels...${RESET}"
     httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" \
         | nuclei -t "$home_dir/nuclei-templates" -severity "$severity_levels" -rl 05 -o "$output_folder/nuclei_results.txt"
 }
