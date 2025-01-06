@@ -27,11 +27,13 @@ display_help() {
     echo "  -d, --domain <domain>   Single domain to scan for vulnerabilities"
     echo "  -f, --file <filename>   File containing multiple domains/URLs to scan"
     echo "  -o, --output <folder>   Specify output folder for scan results (default: ./output)"
+    echo "  -s, --severity <levels> Specify severity levels (e.g., critical,high,medium)"
     exit 0
 }
 
 # Default output folder
 output_folder="./output"
+severity_levels="critical,high,medium"
 
 # Get the current user's home directory
 home_dir=$(eval echo ~"$USER")
@@ -92,6 +94,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        -s|--severity)
+            severity_levels="$2"
+            shift
+            shift
+            ;;
         *)
             echo "Unknown option: $key"
             display_help
@@ -116,7 +123,7 @@ collect_urls() {
     echo -e "${RED}Collecting URLs for $target...${RESET}"
     python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
     echo "$target" | waybackurls >> "$output_file"
-    echo "$target" | gauplus -subs -b png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt >> "$output_file"
+    echo "$target" | gauplus -subs -b $excluded_extensions >> "$output_file"
     echo "$target" | hakrawler -d 3 -subs -u >> "$output_file"
     echo "$target" | katana -d 3 -silent >> "$output_file"
 }
@@ -153,9 +160,9 @@ fi
 run_nuclei() {
     local url_file=$1
 
-    echo -e "${RED}Running Nuclei on URLs from $url_file...${RESET}"
+    echo -e "${RED}Running Nuclei on URLs from $url_file with severity levels: $severity_levels...${RESET}"
     httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" \
-        | nuclei -t "$home_dir/nuclei-templates" -dast -rl 05 -o "$output_folder/nuclei_results.txt"
+        | nuclei -t "$home_dir/nuclei-templates" -severity "$severity_levels" -rl 05 -o "$output_folder/nuclei_results.txt"
 }
 
 if [ -n "$domain" ]; then
