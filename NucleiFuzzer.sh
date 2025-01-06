@@ -33,6 +33,8 @@ display_help() {
 
 # Default output folder
 output_folder="./output"
+
+# Default severity levels
 severity_levels="critical,high,medium"
 
 # Get the current user's home directory
