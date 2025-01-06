@@ -120,7 +120,7 @@ collect_urls() {
     local target=$1
     local output_file=$2
 
-    echo -e "${RED}Collecting URLs for $target...${RESET}"
+    echo -e "${GREEN}Collecting URLs for $target...${RESET}"
     python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
     echo "$target" | waybackurls >> "$output_file"
     echo "$target" | gauplus -subs -b $excluded_extensions >> "$output_file"
