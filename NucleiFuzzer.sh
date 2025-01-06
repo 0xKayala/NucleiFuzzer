@@ -12,7 +12,7 @@ cat << "EOF"
    ____  __  _______/ /__  (_) __/_  __________  ___  _____
   / __ \/ / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
  / / / / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /    
-/_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v2.3.0
+/_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v2.4.0
 
                                Made by Satya Prakash (0xKayala)
 EOF
@@ -117,26 +117,51 @@ fi
 # Ensure output folder exists
 mkdir -p "$output_folder"
 
+# Function to validate URLs
+validate_input() {
+    local input=$1
+    if [[ "$input" =~ ^https?:// ]]; then
+        echo "$input"
+    elif [[ "$input" =~ ^[a-zA-Z0-9.-]+$ ]]; then
+        echo "http://$input"  # Add http:// if it's a domain
+    else
+        echo -e "${RED}Invalid input: $input${RESET}" >&2
+    fi
+}
+
+# Pre-check input file
+validate_file() {
+    local file=$1
+    awk '{if ($0 ~ /^[a-zA-Z0-9.-]+$/ || $0 ~ /^https?:\/\//) print $0}' "$file" > "${file}_validated"
+    echo "${file}_validated"
+}
+
 # Step 1: Run URL collection tools
 collect_urls() {
     local target=$1
     local output_file=$2
 
-    echo -e "${GREEN}Collecting URLs for $target...${RESET}"
-    python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
-    echo "$target" | waybackurls >> "$output_file"
-    echo "$target" | gauplus -subs -b $excluded_extensions >> "$output_file"
-    echo "$target" | hakrawler -d 3 -subs -u >> "$output_file"
-    echo "$target" | katana -d 3 -silent >> "$output_file"
+    validated_target=$(validate_input "$target")
+    if [ -n "$validated_target" ]; then
+        echo -e "${GREEN}Collecting URLs for $validated_target...${RESET}"
+        python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
+        echo "$validated_target" | waybackurls >> "$output_file"
+        echo "$validated_target" | gauplus -subs -b $excluded_extensions >> "$output_file"
+        echo "$validated_target" | hakrawler -d 3 -subs -u >> "$output_file"
+        echo "$validated_target" | katana -d 3 -silent >> "$output_file"
+    else
+        echo -e "${RED}Skipping invalid target: $target${RESET}"
+    fi
 }
 
 if [ -n "$domain" ]; then
     collect_urls "$domain" "$output_folder/$domain_raw.txt"
 elif [ -n "$filename" ]; then
+    validated_file=$(validate_file "$filename")
     while IFS= read -r line; do
         collect_urls "$line" "$output_folder/${line}_raw.txt"
         cat "$output_folder/${line}_raw.txt" >> "$output_folder/all_raw.txt"
-    done < "$filename"
+    done < "$validated_file"
 fi
 
 # Step 2: Validate and deduplicate URLs
