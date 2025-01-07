@@ -134,11 +134,19 @@ collect_urls() {
 
     validated_target=$(validate_input "$target")
     if [ -n "$validated_target" ]; then
-        echo -e "${GREEN}Collecting URLs for $validated_target...${RESET}"
+        echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using ParamSpider"
         python3 "$home_dir/ParamSpider/paramspider.py" -d "$target" --exclude "$excluded_extensions" --level high --quiet -o "$output_file"
+    
+        echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using Waybackurls"
         echo "$validated_target" | waybackurls >> "$output_file"
+    
+        echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using Gauplus"
         echo "$validated_target" | gauplus -subs -b $excluded_extensions >> "$output_file"
+    
+        echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using Hakrawler"
         echo "$validated_target" | hakrawler -d 3 -subs -u >> "$output_file"
+    
+        echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using Katana"
         echo "$validated_target" | katana -d 3 -silent >> "$output_file"
     else
         echo -e "${RED}Skipping invalid target: $target${RESET}"
