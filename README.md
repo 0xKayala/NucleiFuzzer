@@ -22,7 +22,7 @@
 [Fuzzing Templates](https://github.com/0xKayala/fuzzing-templates) `git clone https://github.com/0xKayala/fuzzing-templates.git`
 
 ## Screenshot
-![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/d29d18e2-e5b4-4f5f-b1fd-351167fa7c31)
+![image](https://github.com/user-attachments/assets/f63f5dd2-8edc-432f-904c-87f2d8c76757)
 
 
 ## Output
