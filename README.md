@@ -26,10 +26,10 @@
 
 
 ## Output
-![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/16c8eac9-6924-4196-ae71-70e98057e47c)
-![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/2b204838-d3ed-4408-9920-ba99a9c528a2)
-![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/22943a3d-7fde-4d6b-a84a-62dc9793bdbc)
-![image](https://github.com/0xKayala/NucleiFuzzer/assets/16838353/304f8113-6b65-4ae8-8d23-34bcee750b73)
+![image](https://github.com/user-attachments/assets/f26e6b1e-8bf9-4781-ab08-fe02f19931e3)
+![image](https://github.com/user-attachments/assets/0336b4c2-51e6-4a2f-8994-8fc0717d2b75)
+![image](https://github.com/user-attachments/assets/8293b1bb-2f8b-4678-bb76-d5da9eea6d05)
+
 
 ## Usage
 
