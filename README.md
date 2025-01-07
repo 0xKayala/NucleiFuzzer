@@ -12,11 +12,11 @@
 ## Overview
 `NucleiFuzzer` is an advanced automation tool designed to streamline and optimize web application security testing by integrating a suite of powerful URL discovery and vulnerability scanning tools. It combines `ParamSpider`, `Waybackurls`, `Katana`, `Gauplus`, and `Hakrawler` to comprehensively gather and enumerate potential entry points for web applications. Leveraging the power of `Nuclei`, it scans these endpoints using templates tagged with `dast` and `cve` to uncover a wide range of vulnerabilities effectively.
 
-The enhanced `NucleiFuzzer` is built for speed and accuracy, utilizing advanced URL validation, deduplication with `uro`, and precise HTTP filtering using `httpx`. This tool provides security professionals, bug bounty hunters, and web developers with a seamless workflow to detect and address security risks, ensuring robust web application protection.
+The enhanced `NucleiFuzzer` is built for speed and accuracy, utilizing advanced URL validation, deduplication with `uro`, and precise HTTP filtering using `httpx`. This tool provides `security professionals`, `bug bounty hunters`, and `web developers` with a seamless workflow to detect and address security risks, ensuring robust web application protection.
 
 ## Key Features:
-1. Comprehensive URL Discovery: Integrates multiple tools (ParamSpider, Waybackurls, Katana, Gauplus, and Hakrawler) to ensure exhaustive coverage of URLs and parameters.
-2. Enhanced Vulnerability Scanning: Uses Nuclei with dast and cve templates to identify critical security issues with precision.
+1. Comprehensive URL Discovery: Integrates multiple tools (`ParamSpider`, `Waybackurls`, `Katana`, `Gauplus`, and `Hakrawler`) to ensure exhaustive coverage of URLs and parameters.
+2. Enhanced Vulnerability Scanning: Uses Nuclei with `dast` and `cve` templates to identify critical security issues with precision.
 3. Advanced Filtering and Validation: Removes duplicates and irrelevant results using uro and httpx for cleaner and more focused scanning.
 4. Rate Limiting for Efficiency: Allows customizable request rates for optimal performance during scans.
 5. Customizable and User-Friendly: Easy-to-configure options for domains, files, and output directories, catering to both individual and batch scans.
