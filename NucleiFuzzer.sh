@@ -27,15 +27,11 @@ display_help() {
     echo "  -d, --domain <domain>   Single domain to scan for vulnerabilities"
     echo "  -f, --file <filename>   File containing multiple domains/URLs to scan"
     echo "  -o, --output <folder>   Specify output folder for scan results (default: ./output)"
-    echo "  -s, --severity <levels> Specify severity levels (e.g., critical,high,medium)"
     exit 0
 }
 
 # Default output folder
 output_folder="./output"
-
-# Default severity levels
-severity_levels="critical,high,medium"
 
 # Get the current user's home directory
 home_dir=$(eval echo ~"$USER")
@@ -93,11 +89,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         -o|--output)
             output_folder="$2"
-            shift
-            shift
-            ;;
-        -s|--severity)
-            severity_levels="$2"
             shift
             shift
             ;;
@@ -187,9 +178,9 @@ fi
 run_nuclei() {
     local url_file=$1
 
-    echo -e "${GREEN}Running Nuclei on URLs from $url_file with severity levels: $severity_levels...${RESET}"
+    echo -e "${GREEN}Running Nuclei on URLs from $url_file...${RESET}"
     httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" \
-        | nuclei -t "$home_dir/nuclei-templates" -severity "$severity_levels" -rl 05 -o "$output_folder/nuclei_results.txt"
+        | nuclei -t "$home_dir/nuclei-templates" -dast -rl 10 -o "$output_folder/nuclei_results.txt"
 }
 
 if [ -n "$domain" ]; then
