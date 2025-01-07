@@ -27,13 +27,13 @@ Take advantage of `NucleiFuzzer` to safeguard your web applications against vuln
 **Important:** Make sure the tools `Nuclei`, `Paramspider`, `waybackurls`, `gauplus`, `hakrawler`, `katana`, `httpx` & `uro` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
 
 ### Tools included:
-[Nuclei](https://github.com/projectdiscovery/nuclei) `git clone https://github.com/projectdiscovery/nuclei.git`
-[ParamSpider](https://github.com/0xKayala/ParamSpider) `git clone https://github.com/0xKayala/ParamSpider.git`
-[waybackurls](https://github.com/tomnomnom/waybackurls) `git clone https://github.com/tomnomnom/waybackurls.git`
-[gauplus](https://github.com/bp0lr/gauplus) `git clone https://github.com/bp0lr/gauplus.git`
-[hakrawler](https://github.com/hakluke/hakrawler) `git clone https://github.com/hakluke/hakrawler.git`
-[katana](https://github.com/projectdiscovery/katana) `git clone https://github.com/projectdiscovery/katana.git`
-[httpx](https://github.com/projectdiscovery/httpx) `git clone https://github.com/projectdiscovery/httpx.git`
+[Nuclei](https://github.com/projectdiscovery/nuclei) `git clone https://github.com/projectdiscovery/nuclei.git`<br><br>
+[ParamSpider](https://github.com/0xKayala/ParamSpider) `git clone https://github.com/0xKayala/ParamSpider.git`<br><br>
+[waybackurls](https://github.com/tomnomnom/waybackurls) `git clone https://github.com/tomnomnom/waybackurls.git`<br><br>
+[gauplus](https://github.com/bp0lr/gauplus) `git clone https://github.com/bp0lr/gauplus.git`<br><br>
+[hakrawler](https://github.com/hakluke/hakrawler) `git clone https://github.com/hakluke/hakrawler.git`<br><br>
+[katana](https://github.com/projectdiscovery/katana) `git clone https://github.com/projectdiscovery/katana.git`<br><br>
+[httpx](https://github.com/projectdiscovery/httpx) `git clone https://github.com/projectdiscovery/httpx.git`<br><br>
 [uro](https://github.com/s0md3v/uro) `https://github.com/s0md3v/uro.git`<br><br>
 
 
