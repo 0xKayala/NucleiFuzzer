@@ -1,5 +1,5 @@
 <h1 align="center"> 
-  NucleiFuzzer = Nuclei + Paramspider + Fuzzing Templates
+  NucleiFuzzer = Nuclei + Paramspider + waybackurls + gauplus + hakrawler + katana + Fuzzing Templates
   <br>
 </h1>
 
@@ -9,17 +9,36 @@
 <a href="https://twitter.com/0xKayala"><img src="https://img.shields.io/twitter/follow/0xKayala.svg?logo=twitter"></a>
 </p>
 
-`NucleiFuzzer` is an automation tool that combines `ParamSpider` and `Nuclei` to enhance web application security testing. It uses `ParamSpider` to identify potential entry points and `Nuclei` fuzzing templates to scan for vulnerabilities. `NucleiFuzzer` streamlines the process, making it easier for security professionals and web developers to detect and address security risks efficiently. Download `Nuclei Fuzzer` to protect your web applications from vulnerabilities and attacks.
+## Overview
+`NucleiFuzzer` is an advanced automation tool designed to streamline and optimize web application security testing by integrating a suite of powerful URL discovery and vulnerability scanning tools. It combines `ParamSpider`, `Waybackurls`, `Katana`, `Gauplus`, and `Hakrawler` to comprehensively gather and enumerate potential entry points for web applications. Leveraging the power of `Nuclei`, it scans these endpoints using templates tagged with `dast` and `cve` to uncover a wide range of vulnerabilities effectively.
 
-**Note:** `Nuclei` + `Paramspider` + `Fuzzing Templates` = `NucleiFuzzer` <br><br>
-**Important:** Make sure the tools `Nuclei`, `httpx`, `uro` & `Paramspider` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
+The enhanced `NucleiFuzzer` is built for speed and accuracy, utilizing advanced URL validation, deduplication with `uro`, and precise HTTP filtering using `httpx`. This tool provides security professionals, bug bounty hunters, and web developers with a seamless workflow to detect and address security risks, ensuring robust web application protection.
+
+## Key Features:
+1. Comprehensive URL Discovery: Integrates multiple tools (ParamSpider, Waybackurls, Katana, Gauplus, and Hakrawler) to ensure exhaustive coverage of URLs and parameters.
+2. Enhanced Vulnerability Scanning: Uses Nuclei with dast and cve templates to identify critical security issues with precision.
+3. Advanced Filtering and Validation: Removes duplicates and irrelevant results using uro and httpx for cleaner and more focused scanning.
+4. Rate Limiting for Efficiency: Allows customizable request rates for optimal performance during scans.
+5. Customizable and User-Friendly: Easy-to-configure options for domains, files, and output directories, catering to both individual and batch scans.
+
+Take advantage of `NucleiFuzzer` to safeguard your web applications against vulnerabilities and attacks with an enhanced, efficient, and reliable security testing solution!
+
+**Note:** `Nuclei` + `Paramspider` + `waybackurls` + `gauplus` + `hakrawler` + `katana` + `Fuzzing Templates` = `NucleiFuzzer` <br><br>
+**Important:** Make sure the tools `Nuclei`, `Paramspider`, `waybackurls`, `gauplus`, `hakrawler`, `katana`, `httpx` & `uro` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
 
 ### Tools included:
-[ParamSpider](https://github.com/0xKayala/ParamSpider) `git clone https://github.com/0xKayala/ParamSpider.git`<br><br>
 [Nuclei](https://github.com/projectdiscovery/nuclei) `git clone https://github.com/projectdiscovery/nuclei.git`
+[ParamSpider](https://github.com/0xKayala/ParamSpider) `git clone https://github.com/0xKayala/ParamSpider.git`
+[waybackurls](https://github.com/tomnomnom/waybackurls) `git clone https://github.com/tomnomnom/waybackurls.git`
+[gauplus](https://github.com/bp0lr/gauplus) `git clone https://github.com/bp0lr/gauplus.git`
+[hakrawler](https://github.com/hakluke/hakrawler) `git clone https://github.com/hakluke/hakrawler.git`
+[katana](https://github.com/projectdiscovery/katana) `git clone https://github.com/projectdiscovery/katana.git`
+[httpx](https://github.com/projectdiscovery/httpx) `git clone https://github.com/projectdiscovery/httpx.git`
+[uro](https://github.com/s0md3v/uro) `https://github.com/s0md3v/uro.git`<br><br>
+
 
 ### Templates:
-[Fuzzing Templates](https://github.com/0xKayala/fuzzing-templates) `git clone https://github.com/0xKayala/fuzzing-templates.git`
+[Fuzzing Templates](https://github.com/projectdiscovery/nuclei-templates) `git clone https://github.com/projectdiscovery/nuclei-templates.git`
 
 ## Screenshot
 ![image](https://github.com/user-attachments/assets/f63f5dd2-8edc-432f-904c-87f2d8c76757)
@@ -40,14 +59,15 @@ nf -h
 This will display help for the tool. Here are the options it supports.
 
 ```console
-NucleiFuzzer is a Powerful Automation tool for detecting XSS, SQLi, SSRF, Open-Redirect, etc. vulnerabilities in Web Applications
+NucleiFuzzer: A Powerful Automation Tool for Web Vulnerability Scanning
 
 Usage: /usr/bin/nf [options]
 
 Options:
   -h, --help              Display help information
-  -d, --domain <domain>   Domain to scan for XSS, SQLi, SSRF, Open-Redirect..etc vulnerabilities
+  -d, --domain <domain>   Single domain to scan for vulnerabilities
   -f, --file <filename>   File containing multiple domains/URLs to scan
+  -o, --output <folder>   Specify output folder for scan results (default: ./output)
 ```  
 
 ## Installation:
