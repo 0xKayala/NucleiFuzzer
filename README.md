@@ -10,7 +10,7 @@
 </p>
 
 ## Overview
-`NucleiFuzzer` is an advanced automation tool designed to streamline and optimize web application security testing by integrating a suite of powerful URL discovery and vulnerability scanning tools. It combines `ParamSpider`, `Waybackurls`, `Katana`, `Gauplus`, and `Hakrawler` to comprehensively gather and enumerate potential entry points for web applications. Leveraging the power of `Nuclei`, it scans these endpoints using templates tagged with `dast` and `cve` to uncover a wide range of vulnerabilities effectively.
+`NucleiFuzzer` is an advanced automation tool designed to streamline and optimize web application security testing by integrating a suite of powerful URL discovery and vulnerability scanning tools. It combines `ParamSpider`, `Waybackurls`, `Katana`, `Gauplus`, and `Hakrawler` to comprehensively gather and enumerate potential entry points for web applications. Leveraging the power of `Nuclei`, it scans these endpoints using `fuzzing templates` to effectively uncover a wide range of vulnerabilities.
 
 The enhanced `NucleiFuzzer` is built for speed and accuracy, utilizing advanced URL validation, deduplication with `uro`, and precise HTTP filtering using `httpx`. This tool provides `security professionals`, `bug bounty hunters`, and `web developers` with a seamless workflow to detect and address security risks, ensuring robust web application protection.
 
