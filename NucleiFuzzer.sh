@@ -180,7 +180,7 @@ run_nuclei() {
 
     echo -e "${GREEN}Running Nuclei on URLs from $url_file...${RESET}"
     httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" \
-        | nuclei -t "$home_dir/nuclei-templates" -dast -rl 10 -o "$output_folder/nuclei_results.txt"
+        | nuclei -t "$home_dir/nuclei-templates" -dast -rl 50 -o "$output_folder/nuclei_results.txt"
 }
 
 if [ -n "$domain" ]; then
