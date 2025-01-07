@@ -16,8 +16,8 @@ The enhanced `NucleiFuzzer` is built for speed and accuracy, utilizing advanced 
 
 ## Key Features:
 1. Comprehensive URL Discovery: Integrates multiple tools (`ParamSpider`, `Waybackurls`, `Katana`, `Gauplus`, and `Hakrawler`) to ensure exhaustive coverage of URLs and parameters.
-2. Enhanced Vulnerability Scanning: Uses Nuclei with `fuzzing-templates` to identify critical security issues with precision.
-3. Advanced Filtering and Validation: Removes duplicates and irrelevant results using uro and httpx for cleaner and more focused scanning.
+2. Enhanced Vulnerability Scanning: Uses `Nuclei` with `fuzzing-templates` to identify critical security issues with precision.
+3. Advanced Filtering and Validation: Removes duplicates and irrelevant results using `uro` and `httpx` for cleaner and more focused scanning.
 4. Rate Limiting for Efficiency: Allows customizable request rates for optimal performance during scans.
 5. Customizable and User-Friendly: Easy-to-configure options for domains, files, and output directories, catering to both individual and batch scans.
 
