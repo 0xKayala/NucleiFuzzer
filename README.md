@@ -41,7 +41,7 @@ Take advantage of `NucleiFuzzer` to safeguard your web applications against vuln
 [Fuzzing Templates](https://github.com/projectdiscovery/nuclei-templates) `git clone https://github.com/projectdiscovery/nuclei-templates.git`
 
 ## Screenshot
-![image](https://github.com/user-attachments/assets/f63f5dd2-8edc-432f-904c-87f2d8c76757)
+![image](https://github.com/user-attachments/assets/2361a57a-7e82-47ac-832f-d83088e71ea3)
 
 
 ## Output
