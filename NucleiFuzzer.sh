@@ -214,4 +214,4 @@ if [ "$KEEP_TEMP" = false ]; then
 fi
 
 log "INFO" "Scanning completed. Results saved in $OUTPUT_FOLDER."
-echo -e "${GREEN}Done! Check $OUTPUT_FOLDER/nuclei_results.txt for results.${RESET}"
+echo -e "${RED}NucleiFuzzing is completed! Check $OUTPUT_FOLDER/nuclei_results.txt for results.${RESET}"
