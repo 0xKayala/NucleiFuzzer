@@ -117,7 +117,7 @@ check_prerequisite "httpx" "go install -v github.com/projectdiscovery/httpx/cmd/
 check_prerequisite "uro" "pip3 install uro"
 check_prerequisite "katana" "go install -v github.com/projectdiscovery/katana/cmd/katana@latest"
 check_prerequisite "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
-check_prerequisite "gauplus" "go install github.com/bp0lr/gauplus@latest"
+check_prerequisite "gau" "go install github.com/lc/gau/v2/cmd/gau@latest"
 check_prerequisite "hakrawler" "go install github.com/hakluke/hakrawler@latest"
 clone_repo "https://github.com/0xKayala/ParamSpider" "$HOME_DIR/ParamSpider"
 clone_repo "https://github.com/projectdiscovery/nuclei-templates.git" "$HOME_DIR/nuclei-templates"
@@ -150,8 +150,8 @@ collect_urls() {
     echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using Waybackurls"
     echo "$validated_target" | waybackurls >> "$output_file"
 
-    echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using Gauplus"
-    echo "$validated_target" | gauplus -subs -b "$EXCLUDED_EXTENSIONS" >> "$output_file"
+    echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using Gau"
+    echo "$validated_target" | gau --subs --blacklist "$EXCLUDED_EXTENSIONS" >> "$output_file"
 
     echo -e "${GREEN}Collecting URLs for $validated_target...${RESET} using Hakrawler"
     echo "$validated_target" | hakrawler -d 3 -subs -u >> "$output_file"
