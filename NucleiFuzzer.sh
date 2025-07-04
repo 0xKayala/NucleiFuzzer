@@ -13,7 +13,7 @@ cat << "EOF"
          ____  __  _______/ /__  (_) __/_  __________  ___  _____
         / __ \/ / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
        / / / / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /    
-      /_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v2.5.0
+      /_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v2.5.1
       
                                      Made by Satya Prakash (0xKayala)
 EOF
@@ -27,6 +27,7 @@ LOG_FILE="$OUTPUT_FOLDER/nucleifuzzer.log"
 VERBOSE=false
 KEEP_TEMP=false
 RATE_LIMIT=50
+RESULT_FILE=""
 
 # Help menu
 display_help() {
@@ -39,8 +40,8 @@ display_help() {
     echo "  -o, --output <folder>   Output folder (default: ./output)"
     echo "  -t, --templates <path>  Custom Nuclei templates directory"
     echo "  -v, --verbose           Enable verbose output (logs to terminal)"
-    echo "  -k, --keep-temp        Keep temporary files after execution"
-    echo "  -r, --rate <limit>     Set rate limit for Nuclei (default: 50)"
+    echo "  -k, --keep-temp         Keep temporary files after execution"
+    echo "  -r, --rate <limit>      Set rate limit for Nuclei (default: 50)"
     exit 0
 }
 
@@ -64,11 +65,19 @@ check_prerequisite() {
             log "ERROR" "Failed to install $tool. Exiting."
             exit 1
         fi
-        # Ensure uro is in PATH
         if [ "$tool" = "uro" ] && [ -f "$HOME/.local/bin/uro" ]; then
-            log "INFO" "Adding $HOME/.local/bin to PATH for uro."
             export PATH="$HOME/.local/bin:$PATH"
+            log "INFO" "Added $HOME/.local/bin to PATH."
         fi
+    fi
+}
+
+# Check Python module
+check_python_module() {
+    local module="$1"
+    if ! python3 -c "import $module" &>/dev/null; then
+        log "INFO" "Installing Python module: $module"
+        pip3 install --break-system-packages "$module" || log "ERROR" "Failed to install $module"
     fi
 }
 
@@ -108,13 +117,28 @@ fi
 
 # Setup
 mkdir -p "$OUTPUT_FOLDER"
-: > "$LOG_FILE" # Clear log file
+echo "" > "$LOG_FILE"
 TEMPLATE_DIR=${TEMPLATE_DIR:-"$HOME_DIR/nuclei-templates"}
 
-# Install dependencies
+# Suggest venv usage
+if [[ "$VIRTUAL_ENV" == "" ]]; then
+    log "WARNING" "You are not using a Python virtual environment. It is recommended."
+fi
+
+# Ensure Go bin path is in PATH
+if [[ ":$PATH:" != *":$HOME/go/bin:"* ]]; then
+    export PATH="$HOME/go/bin:$PATH"
+    log "INFO" "Added $HOME/go/bin to PATH."
+fi
+
+# Dependency installation
+check_prerequisite "python3" "sudo apt install -y python3"
+check_prerequisite "pip3" "sudo apt install -y python3-pip"
+check_python_module "requests"
+check_python_module "urllib3"
 check_prerequisite "nuclei" "go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
 check_prerequisite "httpx" "go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest"
-check_prerequisite "uro" "pip3 install uro"
+check_prerequisite "uro" "pip3 install --break-system-packages uro"
 check_prerequisite "katana" "go install -v github.com/projectdiscovery/katana/cmd/katana@latest"
 check_prerequisite "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
 check_prerequisite "gauplus" "go install github.com/bp0lr/gauplus@latest"
@@ -122,7 +146,7 @@ check_prerequisite "hakrawler" "go install github.com/hakluke/hakrawler@latest"
 clone_repo "https://github.com/0xKayala/ParamSpider" "$HOME_DIR/ParamSpider"
 clone_repo "https://github.com/projectdiscovery/nuclei-templates.git" "$HOME_DIR/nuclei-templates"
 
-# Validate URL/domain
+# Validate input format
 validate_input() {
     local input="$1"
     if [[ "$input" =~ ^https?://[a-zA-Z0-9.-]+(/.*)?$ ]]; then
@@ -135,7 +159,7 @@ validate_input() {
     fi
 }
 
-# Collect URLs with progress feedback
+# URL collection
 collect_urls() {
     local target="$1"
     local output_file="$2"
@@ -160,7 +184,7 @@ collect_urls() {
     echo "$validated_target" | katana -d 3 -silent -rl 10 >> "$output_file"
 }
 
-# Validate and deduplicate URLs
+# Validate & deduplicate URLs
 validate_urls() {
     local input_file="$1"
     local output_file="$2"
@@ -172,12 +196,12 @@ validate_urls() {
     sort -u "$input_file" | uro > "$output_file"
 }
 
-# Run Nuclei
+# Run nuclei
 run_nuclei() {
     local url_file="$1"
     echo -e "${GREEN}Running Nuclei on URLs from $url_file...${RESET}"
-    httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" \
-        | nuclei -t "$TEMPLATE_DIR" -dast -rl "$RATE_LIMIT" -o "$OUTPUT_FOLDER/nuclei_results.txt"
+    httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l "$url_file" |
+        nuclei -t "$TEMPLATE_DIR" -dast -rl "$RATE_LIMIT" -o "$RESULT_FILE"
 }
 
 # Main logic
@@ -185,6 +209,7 @@ if [ -n "$DOMAIN" ]; then
     DOMAIN_RAW="${DOMAIN//[^a-zA-Z0-9.-]/_}"
     RAW_FILE="$OUTPUT_FOLDER/${DOMAIN_RAW}_raw.txt"
     VALIDATED_FILE="$OUTPUT_FOLDER/${DOMAIN_RAW}_validated.txt"
+    RESULT_FILE="$OUTPUT_FOLDER/${DOMAIN_RAW}_nuclei_results.txt"
     collect_urls "$DOMAIN" "$RAW_FILE"
     validate_urls "$RAW_FILE" "$VALIDATED_FILE"
     run_nuclei "$VALIDATED_FILE"
@@ -197,7 +222,8 @@ elif [ -n "$FILENAME" ]; then
     COUNT=0
     RAW_FILE="$OUTPUT_FOLDER/all_raw.txt"
     VALIDATED_FILE="$OUTPUT_FOLDER/all_validated.txt"
-    : > "$RAW_FILE" # Clear raw file
+    RESULT_FILE="$OUTPUT_FOLDER/all_nuclei_results.txt"
+    echo "" > "$RAW_FILE"
     while IFS= read -r line; do
         ((COUNT++))
         echo -e "${YELLOW}[Progress]${RESET} Processing $COUNT/$TOTAL_LINES: $line"
@@ -210,8 +236,8 @@ fi
 # Cleanup
 if [ "$KEEP_TEMP" = false ]; then
     log "INFO" "Cleaning up temporary files..."
-    rm -f "$OUTPUT_FOLDER/*_raw.txt" "$OUTPUT_FOLDER/*_validated.txt" 2>/dev/null
+    rm -f "$OUTPUT_FOLDER"/*_raw.txt "$OUTPUT_FOLDER"/*_validated.txt 2>/dev/null
 fi
 
-log "INFO" "Scanning completed. Results saved in $OUTPUT_FOLDER."
-echo -e "${RED}NucleiFuzzing is completed! Check $OUTPUT_FOLDER/nuclei_results.txt for results.${RESET}"
+log "INFO" "Scanning completed. Results saved in $RESULT_FILE."
+echo -e "${RED}NucleiFuzzing is completed! Check $RESULT_FILE for results.${RESET}"
