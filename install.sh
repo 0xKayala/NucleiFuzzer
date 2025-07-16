@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# تحديد نوع shell الحالي
+# get the current shell type
 current_shell=$(basename "$SHELL")
 
 if [ "$current_shell" = "bash" ]; then
-    echo "إضافة المسار إلى .bashrc"
+    echo " add path to .bashrc"
     echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc
     source ~/.bashrc
 elif [ "$current_shell" = "zsh" ]; then
-    echo "إضافة المسار إلى .zshrc"
+    echo " add path to .zshrc"
     echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
     source ~/.zshrc
 else
-    echo "نوع shell غير معروف: $current_shell"
-    echo "يرجى إضافة المسار يدوياً إلى ملف shell المناسب"
+    echo "unknown shell type: $current_shell"
+    echo "place add the path manually to the shell file"
 fi
 
 # Rename and move NucleiFuzzer.sh file to /usr/bin/nf
