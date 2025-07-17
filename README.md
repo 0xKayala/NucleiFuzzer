@@ -46,8 +46,8 @@ Take advantage of `NucleiFuzzer` to safeguard your web applications against vuln
 
 ## Output
 <img width="1733" height="901" alt="image" src="https://github.com/user-attachments/assets/8f9ccec9-bf42-4308-a121-75f28c61b826" />
-![image](https://github.com/user-attachments/assets/6daac197-6278-4736-b062-f5c49cb68888)
-![image](https://github.com/user-attachments/assets/a854d610-6a0e-4c4c-95d7-fe16be7ec977)
+<img width="1733" height="901" alt="image" src="https://github.com/user-attachments/assets/6daac197-6278-4736-b062-f5c49cb68888" />
+<img width="1733" height="901" alt="image" src="https://github.com/user-attachments/assets/a854d610-6a0e-4c4c-95d7-fe16be7ec977" />
 
 
 ## Usage
