@@ -1,28 +1,19 @@
 #!/bin/bash
 
-crawl_urls() {
+crawl() {
     local target="$1"
     local output_file="$2"
 
-    echo "[*] Crawling $target"
+    target=$(normalize_url "$target")
 
-    # Hakrawler
-    echo "$target" | hakrawler -d 3 -subs -u >> "$output_file"
+    echo -e "${BLUE}[*] Crawling $target${RESET}"
 
-    # Katana
-    echo "$target" | katana -d 3 -silent -rl 10 >> "$output_file"
-}
+    echo "$target" | hakrawler -d 3 -subs -u >> "$output_file" 2>/dev/null
+    echo "$target" | katana -d 3 -silent -follow-redirects >> "$output_file" 2>/dev/null
 
-validate_urls() {
-    local input_file="$1"
-    local output_file="$2"
-
-    if [ ! -s "$input_file" ]; then
-        echo "[ERROR] No URLs found!"
-        exit 1
+    # Fallback
+    if [ ! -s "$output_file" ]; then
+        echo "[WARN] No URLs found, adding root domain"
+        echo "$target" >> "$output_file"
     fi
-
-    echo "[*] Deduplicating URLs..."
-
-    sort -u "$input_file" | uro > "$output_file"
 }
