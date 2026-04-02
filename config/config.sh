@@ -1,24 +1,24 @@
 #!/bin/bash
 
-# Default configuration
+# Default config
 
-OUTPUT_FOLDER="./output"
-HOME_DIR=$(eval echo ~"$USER")
-
+OUTPUT_DIR="./output"
+RATE_LIMIT=50
+TEMPLATE_DIR="$HOME/nuclei-templates"
 EXCLUDED_EXTENSIONS="png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff2,eot,ttf,otf,mp4,txt"
 
-LOG_FILE="$OUTPUT_FOLDER/nucleifuzzer.log"
+# Colors
+RED='\033[91m'
+GREEN='\033[92m'
+YELLOW='\033[93m'
+BLUE='\033[94m'
+RESET='\033[0m'
 
-RATE_LIMIT=50
-AI_MODE=false
-VERBOSE=false
-KEEP_TEMP=false
-
-TEMPLATE_DIR="$HOME_DIR/nuclei-templates"
-
-# Output files
-RAW_FILE=""
-VALIDATED_FILE=""
-JSON_FILE=""
-HTML_FILE=""
-RESULT_FILE=""
+# Normalize URL
+normalize_url() {
+    local url="$1"
+    if [[ "$url" != http* ]]; then
+        url="http://$url"
+    fi
+    echo "$url"
+}
