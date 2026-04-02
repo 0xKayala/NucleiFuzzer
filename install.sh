@@ -1,9 +1,18 @@
 #!/bin/bash
 
-# Rename and move NucleiFuzzer.sh file to /usr/bin/nf
-sudo cp nucleifuzzer.sh /usr/bin/nf
+INSTALL_DIR="/opt/nucleifuzzer"
 
-# Make the NucleiFuzzer file executable
-sudo chmod +x /usr/bin/nf
+echo "[*] Installing NucleiFuzzer..."
 
-echo "NucleiFuzzer has been installed successfully! Now Enter the command 'nf' to run the tool."
+# Copy entire project
+sudo mkdir -p $INSTALL_DIR
+sudo cp -r * $INSTALL_DIR
+
+# Create symlink
+sudo ln -sf $INSTALL_DIR/nucleifuzzer.sh /usr/bin/nf
+
+# Make executable
+sudo chmod +x $INSTALL_DIR/nucleifuzzer.sh
+
+echo "✅ NucleiFuzzer has been installed successfully!"
+echo "Now Enter the command 'nf -h' to run the tool."
