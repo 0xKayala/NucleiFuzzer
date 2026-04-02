@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# ==========================================
+# 🔥 NucleiFuzzer v3 - AI Powered Scanner
+# Author: Satya Prakash (0xKayala)
+# ==========================================
+
 # =========================
 # 🎨 COLORS & BANNER
 # =========================
@@ -7,6 +12,7 @@
 RED='\033[91m'
 GREEN='\033[92m'
 YELLOW='\033[93m'
+CYAN='\033[96m'
 RESET='\033[0m'
 
 echo -e "${RED}"
@@ -15,14 +21,14 @@ cat << "EOF"
          ____  __  _______/ /__  (_) __/_  __________  ___  _____
         / __ \/ / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
        / / / / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /    
-      /_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v3.0
+      /_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v3
       
                 ⚡ AI-Powered NucleiFuzzer | 0xKayala
 EOF
 echo -e "${RESET}"
 
 # =========================
-# 📦 BASE DIR (FIXED)
+# 📦 BASE DIR (AUTO DETECT)
 # =========================
 
 SCRIPT_PATH="$(readlink -f "$0")"
@@ -35,7 +41,6 @@ BASE_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 if [ ! -d "$BASE_DIR/core" ]; then
     echo "[ERROR] Core modules not found!"
     echo "Resolved BASE_DIR: $BASE_DIR"
-    echo "Please reinstall using install.sh"
     exit 1
 fi
 
@@ -55,35 +60,8 @@ source "$BASE_DIR/core/ai.sh"
 # =========================
 
 display_help() {
-    echo -e "NucleiFuzzer v3 - AI Powered Web Scanner\n"
-    echo "Usage: nf [options]"
-    echo ""
-    echo "Options:"
-    echo "  -h, --help              Show help"
-    echo "  -d, --domain <domain>   Scan single domain"
-    echo "  -f, --file <file>       Scan multiple domains"
-    echo "  -o, --output <folder>   Output folder"
-    echo "  -t, --templates <path>  Nuclei templates path"
-    echo "  -r, --rate <rate>       Rate limit (default: 50)"
-    echo "  -v, --verbose           Verbose mode"
-    echo "  -k, --keep-temp         Keep temp files"
-    echo "      --ai                Enable AI analysis"
+    echo "Usage: nf -d domain.com [--ai]"
     exit 0
-}
-
-# =========================
-# 🧾 LOG FUNCTION
-# =========================
-
-log() {
-    local level="$1"
-    local message="$2"
-
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE"
-
-    if [ "$VERBOSE" = true ] || [ "$level" = "ERROR" ]; then
-        echo -e "${YELLOW}[$level]${RESET} $message"
-    fi
 }
 
 # =========================
@@ -92,25 +70,13 @@ log() {
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -h|--help) display_help ;;
         -d|--domain) DOMAIN="$2"; shift 2 ;;
-        -f|--file) FILENAME="$2"; shift 2 ;;
-        -o|--output) OUTPUT_FOLDER="$2"; shift 2 ;;
-        -t|--templates) TEMPLATE_DIR="$2"; shift 2 ;;
-        -r|--rate) RATE_LIMIT="$2"; shift 2 ;;
-        -v|--verbose) VERBOSE=true; shift ;;
-        -k|--keep-temp) KEEP_TEMP=true; shift ;;
         --ai) AI_MODE=true; shift ;;
-        *) log "ERROR" "Unknown option: $1"; display_help ;;
+        *) display_help ;;
     esac
 done
 
-# =========================
-# 🚫 INPUT VALIDATION
-# =========================
-
-if [ -z "$DOMAIN" ] && [ -z "$FILENAME" ]; then
-    log "ERROR" "Provide -d (domain) or -f (file)"
+if [ -z "$DOMAIN" ]; then
     display_help
 fi
 
@@ -118,105 +84,53 @@ fi
 # 🛠️ SETUP
 # =========================
 
-mkdir -p "$OUTPUT_FOLDER"
-echo "" > "$LOG_FILE"
+mkdir -p "$OUTPUT_DIR"
 
-TEMPLATE_DIR=${TEMPLATE_DIR:-"$HOME_DIR/nuclei-templates"}
+RAW_FILE="$OUTPUT_DIR/raw.txt"
+VALIDATED_FILE="$OUTPUT_DIR/validated.txt"
+JSON_FILE="$OUTPUT_DIR/results.json"
+HTML_FILE="$OUTPUT_DIR/report.html"
+AI_FILE="$OUTPUT_DIR/ai.txt"
 
-RAW_FILE="$OUTPUT_FOLDER/raw.txt"
-VALIDATED_FILE="$OUTPUT_FOLDER/validated.txt"
-JSON_FILE="$OUTPUT_FOLDER/results.json"
-HTML_FILE="$OUTPUT_FOLDER/report.html"
-
-echo "" > "$RAW_FILE"
-
-# =========================
-# 🔧 DEPENDENCY CHECK
-# =========================
-
-check_prerequisite() {
-    local tool="$1"
-    local install_cmd="$2"
-
-    if ! command -v "$tool" &> /dev/null; then
-        log "INFO" "Installing $tool..."
-        eval "$install_cmd"
-    fi
-}
-
-check_prerequisite "jq" "sudo apt install -y jq"
-check_prerequisite "httpx" "go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
-check_prerequisite "nuclei" "go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
-
-# =========================
-# 🚀 MAIN ENGINE
-# =========================
+> "$RAW_FILE"
 
 echo -e "${GREEN}[*] Starting Scan Engine...${RESET}"
 
-# SINGLE DOMAIN
-if [ -n "$DOMAIN" ]; then
-    collect_urls "$DOMAIN" "$RAW_FILE"
-    crawl_urls "$DOMAIN" "$RAW_FILE"
+# =========================
+# 🔍 RECON
+# =========================
+recon "$DOMAIN" "$RAW_FILE"
 
-# MULTI DOMAIN
-elif [ -n "$FILENAME" ]; then
-
-    if [ ! -f "$FILENAME" ]; then
-        log "ERROR" "File not found: $FILENAME"
-        exit 1
-    fi
-
-    TOTAL=$(wc -l < "$FILENAME")
-    COUNT=0
-
-    while IFS= read -r domain; do
-        ((COUNT++))
-        echo -e "${YELLOW}[*] [$COUNT/$TOTAL] Processing: $domain${RESET}"
-
-        collect_urls "$domain" "$RAW_FILE"
-        crawl_urls "$domain" "$RAW_FILE"
-
-    done < "$FILENAME"
-fi
+# =========================
+# 🕷️ CRAWLING
+# =========================
+crawl "$DOMAIN" "$RAW_FILE"
 
 # =========================
 # 🔍 VALIDATION
 # =========================
-
 validate_urls "$RAW_FILE" "$VALIDATED_FILE"
 
 # =========================
 # ⚡ SCANNING
 # =========================
-
-run_nuclei "$VALIDATED_FILE"
+run_nuclei "$VALIDATED_FILE" "$JSON_FILE"
 
 # =========================
 # 📊 REPORTING
 # =========================
-
-group_by_severity
-generate_html_report
+group_by_severity "$JSON_FILE"
+generate_html_report "$JSON_FILE" "$HTML_FILE"
 
 # =========================
-# 🧠 AI ANALYSIS
+# 🧠 AI
 # =========================
-
 if [ "$AI_MODE" = true ]; then
-    run_ai_analysis
+    run_ai_analysis "$JSON_FILE" "$AI_FILE"
 fi
 
 # =========================
-# 🧹 CLEANUP
-# =========================
-
-if [ "$KEEP_TEMP" = false ]; then
-    rm -f "$RAW_FILE" "$VALIDATED_FILE"
-fi
-
-# =========================
-# ✅ FINAL OUTPUT
+# ✅ DONE
 # =========================
 
 echo ""
@@ -224,9 +138,5 @@ echo "======================================"
 echo -e "${GREEN}✅ Scan Completed Successfully${RESET}"
 echo "📁 JSON Report : $JSON_FILE"
 echo "🌐 HTML Report : $HTML_FILE"
-
-if [ "$AI_MODE" = true ]; then
-    echo "🧠 AI Report   : $OUTPUT_FOLDER/ai_analysis.txt"
-fi
-
+[ "$AI_MODE" = true ] && echo "🧠 AI Report   : $AI_FILE"
 echo "======================================"
