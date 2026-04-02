@@ -1,24 +1,37 @@
 #!/bin/bash
 
-# Default config
+# ==========================================
+# ⚙️ GLOBAL CONFIGURATION
+# ==========================================
 
 OUTPUT_DIR="./output"
 RATE_LIMIT=50
 TEMPLATE_DIR="$HOME/nuclei-templates"
-EXCLUDED_EXTENSIONS="png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff2,eot,ttf,otf,mp4,txt"
+HOME_DIR=$(eval echo ~"$USER")
 
-# Colors
+EXCLUDED_EXTENSIONS="png,jpg,jpeg,gif,svg,css,js,woff,woff2,ttf,mp4,pdf"
+
+# ==========================================
+# 🎨 COLORS
+# ==========================================
+
 RED='\033[91m'
 GREEN='\033[92m'
 YELLOW='\033[93m'
 BLUE='\033[94m'
+CYAN='\033[96m'
 RESET='\033[0m'
 
-# Normalize URL
+# ==========================================
+# 🌐 URL NORMALIZATION
+# ==========================================
+
 normalize_url() {
     local url="$1"
+
     if [[ "$url" != http* ]]; then
         url="http://$url"
     fi
+
     echo "$url"
 }
