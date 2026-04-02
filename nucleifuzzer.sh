@@ -25,7 +25,8 @@ echo -e "${RESET}"
 # 📦 LOAD MODULES
 # =========================
 
-BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_PATH="$(readlink -f "$0")"
+BASE_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 
 source "$BASE_DIR/config/config.sh"
 source "$BASE_DIR/core/recon.sh"
