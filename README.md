@@ -21,17 +21,17 @@ The enhanced `NucleiFuzzer` is built for speed and accuracy, utilizing advanced 
 4. Rate Limiting for Efficiency: Allows customizable request rates for optimal performance during scans.
 5. Customizable and User-Friendly: Easy-to-configure options for domains, files, and output directories, catering to both individual and batch scans.
 
-## ✨ Features
+Take advantage of `NucleiFuzzer` to safeguard your web applications against vulnerabilities and attacks with an enhanced, efficient, and reliable security testing solution!
+
+**Note:** `Nuclei` + `Paramspider` + `waybackurls` + `gauplus` + `hakrawler` + `katana` + `Fuzzing Templates` = `NucleiFuzzer` <br><br>
+**Important:** Make sure the tools `Nuclei`, `Paramspider`, `waybackurls`, `gauplus`, `hakrawler`, `katana`, `httpx` & `uro` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
+
+## ✨ New Features (Updated)
 - 🔍 Automated Recon + Crawling
 - ⚡ Nuclei Vulnerability Scanning
 - 📊 JSON + HTML Reporting
 - 🧠 AI Vulnerability Analysis (NEW)
 - 📁 Clean Output & Severity Grouping
-
-Take advantage of `NucleiFuzzer` to safeguard your web applications against vulnerabilities and attacks with an enhanced, efficient, and reliable security testing solution!
-
-**Note:** `Nuclei` + `Paramspider` + `waybackurls` + `gauplus` + `hakrawler` + `katana` + `Fuzzing Templates` = `NucleiFuzzer` <br><br>
-**Important:** Make sure the tools `Nuclei`, `Paramspider`, `waybackurls`, `gauplus`, `hakrawler`, `katana`, `httpx` & `uro` are installed on your machine and executing correctly to use the `NucleiFuzzer` without any issues.
 
 ### Tools included:
 - [Nuclei](https://github.com/projectdiscovery/nuclei) `git clone https://github.com/projectdiscovery/nuclei.git`<br>
