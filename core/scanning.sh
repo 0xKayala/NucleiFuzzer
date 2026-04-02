@@ -1,20 +1,29 @@
 #!/bin/bash
 
+validate_urls() {
+    local input="$1"
+    local output="$2"
+
+    sort -u "$input" | uro > "$output"
+
+    if [ ! -s "$output" ]; then
+        echo "[ERROR] No valid URLs found"
+        exit 1
+    fi
+}
+
 run_nuclei() {
-    local input_file="$1"
+    local input="$1"
+    local output="$2"
 
-    echo "[*] Running HTTP probe..."
+    httpx -silent -l "$input" > "$input.live"
 
-    httpx -silent \
-        -mc 200,204,301,302,401,403,405,500,502,503,504 \
-        -l "$input_file" > "$OUTPUT_FOLDER/live.txt"
+    if [ ! -s "$input.live" ]; then
+        echo "[ERROR] No live hosts"
+        exit 1
+    fi
 
-    echo "[*] Running Nuclei scan..."
-
-    nuclei \
-        -t "$TEMPLATE_DIR" \
-        -json \
-        -rl "$RATE_LIMIT" \
-        -l "$OUTPUT_FOLDER/live.txt" \
-        -o "$JSON_FILE"
+    nuclei -l "$input.live" \
+        -severity critical,high,medium,low \
+        -jsonl > "$output"
 }
