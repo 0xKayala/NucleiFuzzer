@@ -1,48 +1,31 @@
 #!/bin/bash
 
 group_by_severity() {
+    local file="$1"
+
     echo "[*] Grouping by severity..."
 
-    jq -r '.info.severity' "$JSON_FILE" | \
-        sort | uniq -c > "$OUTPUT_FOLDER/severity.txt"
+    jq -r '.info.severity' "$file" | sort | uniq -c
 }
 
 generate_html_report() {
+    local json="$1"
+    local html="$2"
+
     echo "[*] Generating HTML report..."
 
-    HTML_FILE="$OUTPUT_FOLDER/report.html"
-
-    cat <<EOF > "$HTML_FILE"
+    cat <<EOF > "$html"
 <html>
-<head>
-<title>NucleiFuzzer Report</title>
-<style>
-body { font-family: Arial; }
-.critical { color: red; }
-.high { color: orange; }
-.medium { color: goldenrod; }
-.low { color: green; }
-</style>
-</head>
 <body>
-
-<h1>NucleiFuzzer Scan Report</h1>
-
-<h2>Severity Summary</h2>
+<h1>NucleiFuzzer Report</h1>
 <pre>
-$(cat "$OUTPUT_FOLDER/severity.txt")
-</pre>
-
-<h2>Findings</h2>
 EOF
 
-    jq -r '
-    "<div>
-    <b class=\"" + .info.severity + "\">" + .info.severity + "</b><br>
-    <b>" + .info.name + "</b><br>
-    " + .host + "<br><br>
-    </div>"
-    ' "$JSON_FILE" >> "$HTML_FILE"
+    cat "$json" >> "$html"
 
-    echo "</body></html>" >> "$HTML_FILE"
+    cat <<EOF >> "$html"
+</pre>
+</body>
+</html>
+EOF
 }
