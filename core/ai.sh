@@ -5,18 +5,30 @@ run_ai_analysis() {
     local output="$2"
 
     if [ ! -f "$json" ]; then
-        echo "[ERROR] No JSON found"
+        echo "[ERROR] No data for AI analysis"
         return
     fi
 
+    echo -e "[*] Running AI Analysis..."
+
     CRITICAL=$(grep -c '"severity":"critical"' "$json")
+    HIGH=$(grep -c '"severity":"high"' "$json")
 
     {
-        echo "AI Analysis"
+        echo "====== AI SECURITY INSIGHTS ======"
         echo "Critical: $CRITICAL"
+        echo "High: $HIGH"
 
         if [ "$CRITICAL" -gt 0 ]; then
-            echo "⚠️ Immediate action required"
+            echo "⚠️ Immediate patch required"
+        fi
+
+        if grep -qi "idor" "$json"; then
+            echo "💡 Possible IDOR → check access control"
+        fi
+
+        if grep -qi "xss" "$json"; then
+            echo "💡 XSS → test payload variations"
         fi
 
     } > "$output"
