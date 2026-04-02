@@ -22,11 +22,26 @@ EOF
 echo -e "${RESET}"
 
 # =========================
-# 📦 LOAD MODULES
+# 📦 BASE DIR (FIXED)
 # =========================
 
 SCRIPT_PATH="$(readlink -f "$0")"
 BASE_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+
+# =========================
+# 🛑 SAFETY CHECK
+# =========================
+
+if [ ! -d "$BASE_DIR/core" ]; then
+    echo "[ERROR] Core modules not found!"
+    echo "Resolved BASE_DIR: $BASE_DIR"
+    echo "Please reinstall using install.sh"
+    exit 1
+fi
+
+# =========================
+# 📦 LOAD MODULES
+# =========================
 
 source "$BASE_DIR/config/config.sh"
 source "$BASE_DIR/core/recon.sh"
