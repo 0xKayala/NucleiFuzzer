@@ -21,6 +21,13 @@ The enhanced `NucleiFuzzer` is built for speed and accuracy, utilizing advanced 
 4. Rate Limiting for Efficiency: Allows customizable request rates for optimal performance during scans.
 5. Customizable and User-Friendly: Easy-to-configure options for domains, files, and output directories, catering to both individual and batch scans.
 
+## ✨ Features
+- 🔍 Automated Recon + Crawling
+- ⚡ Nuclei Vulnerability Scanning
+- 📊 JSON + HTML Reporting
+- 🧠 AI Vulnerability Analysis (NEW)
+- 📁 Clean Output & Severity Grouping
+
 Take advantage of `NucleiFuzzer` to safeguard your web applications against vulnerabilities and attacks with an enhanced, efficient, and reliable security testing solution!
 
 **Note:** `Nuclei` + `Paramspider` + `waybackurls` + `gauplus` + `hakrawler` + `katana` + `Fuzzing Templates` = `NucleiFuzzer` <br><br>
