@@ -4,17 +4,17 @@ INSTALL_DIR="/opt/nucleifuzzer"
 
 echo "[*] Installing NucleiFuzzer..."
 
-# Create directory
-sudo mkdir -p $INSTALL_DIR
+# Create install directory
+sudo mkdir -p "$INSTALL_DIR"
 
-# Copy all files (IMPORTANT: includes core + config)
-sudo cp -r ./* $INSTALL_DIR
+# Copy all project files (IMPORTANT: includes core + config)
+sudo cp -r ./* "$INSTALL_DIR"
 
 # Make main script executable
-sudo chmod +x $INSTALL_DIR/nucleifuzzer.sh
+sudo chmod +x "$INSTALL_DIR/nucleifuzzer.sh"
 
 # Create symlink
-sudo ln -sf $INSTALL_DIR/nucleifuzzer.sh /usr/bin/nf
+sudo ln -sf "$INSTALL_DIR/nucleifuzzer.sh" /usr/bin/nf
 
 echo ""
 echo "======================================"
