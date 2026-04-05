@@ -1,8 +1,28 @@
 #!/bin/bash
 
 # ==========================================
-# 🔧 DEPENDENCY INSTALLER (FINAL PRO VERSION)
+# 🔧 DEPENDENCY INSTALLER (FINAL STABLE VERSION)
 # ==========================================
+
+# ==========================================
+# 🌐 NETWORK FIX (WSL + GO ISSUE FIX)
+# ==========================================
+
+fix_network() {
+
+    echo "[*] Fixing network issues..."
+
+    # Disable IPv6 (prevents Go failures)
+    sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1 &>/dev/null
+
+    # Fix DNS (WSL issue)
+    echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf >/dev/null
+
+    # Force Go DNS resolver
+    export GODEBUG=netdns=go
+
+    echo "[OK] Network configured (IPv4 forced)"
+}
 
 # ==========================================
 # 📦 GENERIC INSTALLER
@@ -37,7 +57,7 @@ install_python_module() {
 }
 
 # ==========================================
-# 🧠 GO VERSION FIX (CRITICAL)
+# 🧠 GO INSTALL (STABLE VERSION)
 # ==========================================
 
 install_go_latest() {
@@ -60,15 +80,15 @@ install_go_latest() {
     # Remove old Go
     sudo rm -rf /usr/local/go
 
-    # Download latest Go
+    # Install fresh Go
     wget -q https://go.dev/dl/go1.25.8.linux-amd64.tar.gz -O /tmp/go.tar.gz
-
-    # Install
     sudo tar -C /usr/local -xzf /tmp/go.tar.gz
 
-    # PATH fix
     export PATH="/usr/local/go/bin:$PATH"
     export PATH="$HOME/go/bin:$PATH"
+
+    # 🔥 CRITICAL FIX (prevents toolchain auto-download failure)
+    export GOTOOLCHAIN=local
 
     echo "[+] Go installed: $(go version)"
 }
@@ -86,11 +106,9 @@ install_uro() {
 
     echo "[*] Installing uro..."
 
-    # Preferred: pipx
     if command -v pipx &>/dev/null; then
         echo "[+] Using pipx"
         pipx install uro
-
     else
         echo "[!] pipx not found → installing..."
 
@@ -134,6 +152,7 @@ setup_dependencies() {
     echo "🔧 NucleiFuzzer Dependency Engine"
     echo "======================================"
 
+    fix_network
     check_network
 
     echo "[*] Installing system dependencies..."
@@ -142,7 +161,7 @@ setup_dependencies() {
 
     install_go_latest
 
-    # PATH FIX (CRITICAL FOR WSL)
+    # PATH FIX (VERY IMPORTANT FOR WSL)
     export PATH="/usr/local/go/bin:$HOME/go/bin:$HOME/.local/bin:$PATH"
 
     echo "[*] Installing Python modules..."
@@ -150,6 +169,10 @@ setup_dependencies() {
     install_python_module "urllib3"
 
     echo "[*] Installing Go tools..."
+
+    # 🔥 Stable Go proxy setup
+    export GOPROXY=https://proxy.golang.org,direct
+    export GOSUMDB=off
 
     go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
     go install github.com/projectdiscovery/httpx/cmd/httpx@latest
