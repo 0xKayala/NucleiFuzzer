@@ -9,7 +9,7 @@ recon() {
     echo -e "${BLUE}[*] Recon started for $target${RESET}"
 
     # ParamSpider
-    python3 "$HOME_DIR/ParamSpider/paramspider.py" \
+    python3 "$HOME/ParamSpider/paramspider.py" \
         -d "$target" \
         --exclude "$EXCLUDED_EXTENSIONS" \
         --quiet \
