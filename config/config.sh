@@ -4,10 +4,10 @@
 # ⚙️ GLOBAL CONFIGURATION
 # ==========================================
 
-OUTPUT_DIR="./output"
-RATE_LIMIT=50
-TEMPLATE_DIR="$HOME/nuclei-templates"
-HOME_DIR=$(eval echo ~"$USER")
+OUTPUT_DIR="${OUTPUT_DIR:-./output}"
+RATE_LIMIT="${RATE_LIMIT:-50}"
+TEMPLATE_DIR="${TEMPLATE_DIR:-$HOME/nuclei-templates}"
+HOME_DIR="$HOME"
 
 EXCLUDED_EXTENSIONS="png,jpg,jpeg,gif,svg,css,js,woff,woff2,ttf,mp4,pdf"
 
@@ -35,3 +35,6 @@ normalize_url() {
 
     echo "$url"
 }
+
+# Ensure PATH (WSL FIX)
+export PATH="$HOME/go/bin:$HOME/.local/bin:$PATH"
