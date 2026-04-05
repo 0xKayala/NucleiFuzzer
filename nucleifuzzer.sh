@@ -6,24 +6,26 @@
 # ==========================================
 
 # =========================
-# 🎨 COLORS & BANNER
+# 🎨 COLORS
 # =========================
-
 RED='\033[91m'
 GREEN='\033[92m'
 YELLOW='\033[93m'
 CYAN='\033[96m'
 RESET='\033[0m'
 
+# =========================
+# 🎯 BANNER
+# =========================
 show_banner() {
 echo -e "${RED}"
 cat << "EOF"
-                           __     _ ____                          
+                           __     _ ____
          ____  __  _______/ /__  (_) __/_  __________  ___  _____
         / __ \/ / / / ___/ / _ \/ / /_/ / / /_  /_  / / _ \/ ___/
-       / / / / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /    
+       / / / / /_/ / /__/ /  __/ / __/ /_/ / / /_/ /_/  __/ /
       /_/ /_/\__,_/\___/_/\___/_/_/  \__,_/ /___/___/\___/_/   v3.0
-      
+
                 ⚡ AI-Powered NucleiFuzzer | 0xKayala
 EOF
 echo -e "${RESET}"
@@ -32,60 +34,62 @@ echo -e "${RESET}"
 # =========================
 # 📌 HELP MENU
 # =========================
-
 show_help() {
 show_banner
 echo -e "${CYAN}Usage:${RESET} nf [options]"
 echo ""
 echo -e "${GREEN}Options:${RESET}"
-echo "  -h, --help              Show this help menu"
+echo "  -h, --help              Show help"
 echo "  -d, --domain <domain>   Scan single domain"
 echo "  -f, --file <file>       Scan multiple domains"
-echo "  -o, --output <folder>   Output directory (default: ./output)"
+echo "  -o, --output <folder>   Output directory"
 echo "  -t, --templates <path>  Nuclei templates path"
 echo "  -r, --rate <rate>       Rate limit (default: 50)"
-echo "  -v, --verbose           Enable verbose output"
-echo "  -k, --keep-temp         Keep temporary files"
+echo "  -v, --verbose           Verbose mode"
+echo "  -k, --keep-temp         Keep temp files"
 echo "      --ai                Enable AI analysis"
+echo "      --doctor            Run diagnostics"
+echo "      --update            Update tools"
 echo ""
 exit 0
 }
 
 # =========================
-# 📦 BASE DIR DETECTION
+# 📦 BASE DIR (FIXED)
 # =========================
-
 SCRIPT_PATH="$(readlink -f "$0")"
-BASE_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+BASE_DIR="$(dirname "$SCRIPT_PATH")"
+
+# If installed in /usr/bin, redirect to /opt
+if [[ "$BASE_DIR" == "/usr/bin" ]]; then
+    BASE_DIR="/opt/nucleifuzzer"
+fi
 
 # =========================
 # 🛑 MODULE CHECK
 # =========================
-
 if [ ! -d "$BASE_DIR/core" ]; then
-    echo "[ERROR] Core modules not found!"
-    echo "Resolved BASE_DIR: $BASE_DIR"
+    echo "[ERROR] Core modules not found at $BASE_DIR"
     exit 1
 fi
 
 # =========================
-# 📦 LOAD MODULES
+# ⚙️ DEFAULTS
 # =========================
-
-source "$BASE_DIR/config/config.sh"
-source "$BASE_DIR/core/recon.sh"
-source "$BASE_DIR/core/crawling.sh"
-source "$BASE_DIR/core/scanning.sh"
-source "$BASE_DIR/core/reporting.sh"
-source "$BASE_DIR/core/ai.sh"
+VERBOSE=false
+KEEP_TEMP=false
+AI_MODE=false
+DOCTOR_MODE=false
+UPDATE_MODE=false
 
 # =========================
-# 🧾 LOG FUNCTION
+# 🧾 LOG FUNCTION (FIXED)
 # =========================
-
 log() {
     local level="$1"
     local message="$2"
+
+    [ -z "$LOG_FILE" ] && LOG_FILE="/tmp/nucleifuzzer.log"
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE"
 
@@ -95,17 +99,21 @@ log() {
 }
 
 # =========================
-# ⚙️ DEFAULTS
+# 📦 LOAD MODULES
 # =========================
-
-VERBOSE=false
-KEEP_TEMP=false
-AI_MODE=false
+source "$BASE_DIR/config/config.sh"
+source "$BASE_DIR/core/deps.sh"
+source "$BASE_DIR/core/doctor.sh"
+source "$BASE_DIR/core/update.sh"
+source "$BASE_DIR/core/recon.sh"
+source "$BASE_DIR/core/crawling.sh"
+source "$BASE_DIR/core/scanning.sh"
+source "$BASE_DIR/core/reporting.sh"
+source "$BASE_DIR/core/ai.sh"
 
 # =========================
 # ⚙️ ARG PARSER
 # =========================
-
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -h|--help) show_help ;;
@@ -117,22 +125,46 @@ while [[ $# -gt 0 ]]; do
         -v|--verbose) VERBOSE=true; shift ;;
         -k|--keep-temp) KEEP_TEMP=true; shift ;;
         --ai) AI_MODE=true; shift ;;
+        --doctor) DOCTOR_MODE=true; shift ;;
+        --update) UPDATE_MODE=true; shift ;;
         *) echo "[ERROR] Unknown option: $1"; show_help ;;
     esac
 done
 
 # =========================
+# 🩺 DOCTOR MODE
+# =========================
+if [ "$DOCTOR_MODE" = true ]; then
+    show_banner
+    run_doctor
+    exit 0
+fi
+
+# =========================
+# ⬆️ UPDATE MODE
+# =========================
+if [ "$UPDATE_MODE" = true ]; then
+    show_banner
+    run_update
+    exit 0
+fi
+
+# =========================
 # 🚫 VALIDATION
 # =========================
-
 if [ -z "$DOMAIN" ] && [ -z "$FILENAME" ]; then
     show_help
 fi
 
 # =========================
-# 🛠️ SETUP
+# 🔧 DEPENDENCIES
 # =========================
+setup_dependencies
 
+# =========================
+# 📁 OUTPUT SETUP
+# =========================
+OUTPUT_DIR="${OUTPUT_DIR:-./output}"
 mkdir -p "$OUTPUT_DIR"
 
 LOG_FILE="$OUTPUT_DIR/nucleifuzzer.log"
@@ -142,67 +174,47 @@ JSON_FILE="$OUTPUT_DIR/results.json"
 HTML_FILE="$OUTPUT_DIR/report.html"
 AI_FILE="$OUTPUT_DIR/ai_analysis.txt"
 
+touch "$LOG_FILE"
 > "$RAW_FILE"
-> "$LOG_FILE"
 
 show_banner
 echo -e "${GREEN}[*] Starting Scan Engine...${RESET}"
 
 # =========================
-# 🚀 SINGLE DOMAIN
+# 🚀 EXECUTION FLOW
 # =========================
 
 if [ -n "$DOMAIN" ]; then
     recon "$DOMAIN" "$RAW_FILE"
     crawl "$DOMAIN" "$RAW_FILE"
 
-# =========================
-# 🚀 MULTI DOMAIN
-# =========================
-
 elif [ -n "$FILENAME" ]; then
-
-    if [ ! -f "$FILENAME" ]; then
-        log "ERROR" "File not found: $FILENAME"
-        exit 1
-    fi
-
-    TOTAL=$(wc -l < "$FILENAME")
-    COUNT=0
-
     while IFS= read -r domain; do
-        ((COUNT++))
-        echo -e "${CYAN}[*] [$COUNT/$TOTAL] Processing: $domain${RESET}"
-
+        echo -e "${CYAN}[*] Processing: $domain${RESET}"
         recon "$domain" "$RAW_FILE"
         crawl "$domain" "$RAW_FILE"
-
     done < "$FILENAME"
 fi
 
 # =========================
 # 🔍 VALIDATION
 # =========================
-
 validate_urls "$RAW_FILE" "$VALIDATED_FILE"
 
 # =========================
 # ⚡ SCANNING
 # =========================
-
 run_nuclei "$VALIDATED_FILE" "$JSON_FILE"
 
 # =========================
 # 📊 REPORTING
 # =========================
-
 group_by_severity "$JSON_FILE"
 generate_html_report "$JSON_FILE" "$HTML_FILE"
 
 # =========================
 # 🧠 AI
 # =========================
-
 if [ "$AI_MODE" = true ]; then
     run_ai_analysis "$JSON_FILE" "$AI_FILE"
 fi
@@ -210,7 +222,6 @@ fi
 # =========================
 # 🧹 CLEANUP
 # =========================
-
 if [ "$KEEP_TEMP" = false ]; then
     rm -f "$RAW_FILE" "$VALIDATED_FILE" "$VALIDATED_FILE.live" 2>/dev/null
 fi
@@ -218,7 +229,6 @@ fi
 # =========================
 # ✅ FINAL OUTPUT
 # =========================
-
 echo ""
 echo "======================================"
 echo -e "${GREEN}✅ Scan Completed Successfully${RESET}"
