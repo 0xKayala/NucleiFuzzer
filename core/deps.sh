@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🔧 DEPENDENCY INSTALLER (SMART VERSION)
+# 🔧 DEPENDENCY INSTALLER (FINAL VERSION)
 # ==========================================
 
 install_tool() {
@@ -26,6 +26,13 @@ install_python_module() {
     }
 }
 
+install_go() {
+    if ! command -v go &>/dev/null; then
+        echo "[*] Installing Go..."
+        sudo apt install -y golang
+    fi
+}
+
 # ==========================================
 # 🧠 SMART URO INSTALLER
 # ==========================================
@@ -38,38 +45,21 @@ install_uro() {
 
     echo "[*] Installing uro..."
 
-    # Step 1: Check pipx
     if command -v pipx &>/dev/null; then
-        echo "[+] Using pipx to install uro"
+        echo "[+] Using pipx"
         pipx install uro
-
     else
-        echo "[!] pipx not found"
-
-        # Step 2: Install pipx if possible
-        if command -v apt &>/dev/null; then
-            echo "[*] Installing pipx via apt..."
-            sudo apt install -y pipx
-            pipx ensurepath
-
-            export PATH="$HOME/.local/bin:$PATH"
-
-            echo "[+] Using pipx after install"
-            pipx install uro
-
-        else
-            # Step 3: Fallback to pip
-            echo "[!] Falling back to pip3 installation"
-            pip3 install --break-system-packages uro
-
-            # Fix PATH
-            export PATH="$HOME/.local/bin:$PATH"
-        fi
+        echo "[!] pipx not found → installing..."
+        sudo apt install -y pipx
+        pipx ensurepath
+        export PATH="$HOME/.local/bin:$PATH"
+        pipx install uro
     fi
 
-    # Final check
+    export PATH="$HOME/.local/bin:$PATH"
+
     if ! command -v uro &>/dev/null; then
-        echo "[ERROR] uro installation failed. Please install manually."
+        echo "[ERROR] uro installation failed"
         exit 1
     fi
 }
@@ -82,25 +72,23 @@ setup_dependencies() {
 
     echo "[*] Checking dependencies..."
 
-    # System tools
     install_tool "python3" "sudo apt install -y python3"
     install_tool "pip3" "sudo apt install -y python3-pip"
     install_tool "jq" "sudo apt install -y jq"
     install_tool "git" "sudo apt install -y git"
 
-    # Python modules
-    install_python_module "requests"
-    install_python_module "urllib3"
+    install_go
 
-    # Go tools
-    install_tool "nuclei" "go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
-    install_tool "httpx" "go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest"
-    install_tool "katana" "go install -v github.com/projectdiscovery/katana/cmd/katana@latest"
+    # PATH FIX (VERY IMPORTANT)
+    export PATH="$HOME/go/bin:$HOME/.local/bin:$PATH"
+
+    install_tool "nuclei" "go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
+    install_tool "httpx" "go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
+    install_tool "katana" "go install github.com/projectdiscovery/katana/cmd/katana@latest"
     install_tool "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
     install_tool "gauplus" "go install github.com/bp0lr/gauplus@latest"
     install_tool "hakrawler" "go install github.com/hakluke/hakrawler@latest"
 
-    # 🔥 FIXED URO INSTALL
     install_uro
 
     # ParamSpider
@@ -109,14 +97,11 @@ setup_dependencies() {
         git clone https://github.com/0xKayala/ParamSpider "$HOME/ParamSpider"
     fi
 
-    # Nuclei Templates
+    # Templates
     if [ ! -d "$HOME/nuclei-templates" ]; then
         echo "[*] Cloning nuclei templates..."
         git clone https://github.com/projectdiscovery/nuclei-templates "$HOME/nuclei-templates"
     fi
-
-    # PATH FIX (VERY IMPORTANT FOR WSL)
-    export PATH="$HOME/go/bin:$HOME/.local/bin:$PATH"
 
     echo "[*] Dependencies ready ✅"
 }
