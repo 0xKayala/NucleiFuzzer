@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # ==========================================
-# 🔧 DEPENDENCY INSTALLER (FINAL VERSION)
+# 🔧 DEPENDENCY INSTALLER (FINAL PRO VERSION)
+# ==========================================
+
+# ==========================================
+# 📦 GENERIC INSTALLER
 # ==========================================
 
 install_tool() {
@@ -14,8 +18,14 @@ install_tool() {
             echo "[ERROR] Failed to install $name"
             exit 1
         }
+    else
+        echo "[OK] $name already installed"
     fi
 }
+
+# ==========================================
+# 🐍 PYTHON MODULE INSTALLER
+# ==========================================
 
 install_python_module() {
     local module="$1"
@@ -26,11 +36,41 @@ install_python_module() {
     }
 }
 
-install_go() {
-    if ! command -v go &>/dev/null; then
-        echo "[*] Installing Go..."
-        sudo apt install -y golang
+# ==========================================
+# 🧠 GO VERSION FIX (CRITICAL)
+# ==========================================
+
+install_go_latest() {
+
+    REQUIRED_VERSION="1.25.8"
+
+    if command -v go &>/dev/null; then
+        CURRENT_VERSION=$(go version | awk '{print $3}' | sed 's/go//')
+
+        if [[ "$(printf '%s\n' "$REQUIRED_VERSION" "$CURRENT_VERSION" | sort -V | head -n1)" == "$REQUIRED_VERSION" ]]; then
+            echo "[OK] Go version is sufficient ($CURRENT_VERSION)"
+            return
+        else
+            echo "[!] Go outdated ($CURRENT_VERSION) → upgrading..."
+        fi
+    else
+        echo "[*] Go not found → installing..."
     fi
+
+    # Remove old Go
+    sudo rm -rf /usr/local/go
+
+    # Download latest Go
+    wget -q https://go.dev/dl/go1.25.8.linux-amd64.tar.gz -O /tmp/go.tar.gz
+
+    # Install
+    sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+
+    # PATH fix
+    export PATH="/usr/local/go/bin:$PATH"
+    export PATH="$HOME/go/bin:$PATH"
+
+    echo "[+] Go installed: $(go version)"
 }
 
 # ==========================================
@@ -40,20 +80,29 @@ install_go() {
 install_uro() {
 
     if command -v uro &>/dev/null; then
+        echo "[OK] uro already installed"
         return
     fi
 
     echo "[*] Installing uro..."
 
+    # Preferred: pipx
     if command -v pipx &>/dev/null; then
         echo "[+] Using pipx"
         pipx install uro
+
     else
         echo "[!] pipx not found → installing..."
-        sudo apt install -y pipx
-        pipx ensurepath
-        export PATH="$HOME/.local/bin:$PATH"
-        pipx install uro
+
+        if command -v apt &>/dev/null; then
+            sudo apt install -y pipx
+            pipx ensurepath
+            export PATH="$HOME/.local/bin:$PATH"
+            pipx install uro
+        else
+            echo "[!] Falling back to pip3"
+            pip3 install --break-system-packages uro
+        fi
     fi
 
     export PATH="$HOME/.local/bin:$PATH"
@@ -65,43 +114,71 @@ install_uro() {
 }
 
 # ==========================================
-# 🚀 MAIN DEP SETUP
+# 🌐 NETWORK CHECK
+# ==========================================
+
+check_network() {
+    if ! ping -c 1 google.com &>/dev/null; then
+        echo "[ERROR] No internet connection"
+        exit 1
+    fi
+}
+
+# ==========================================
+# 🚀 MAIN DEPENDENCY SETUP
 # ==========================================
 
 setup_dependencies() {
 
-    echo "[*] Checking dependencies..."
+    echo "======================================"
+    echo "🔧 NucleiFuzzer Dependency Engine"
+    echo "======================================"
 
-    install_tool "python3" "sudo apt install -y python3"
-    install_tool "pip3" "sudo apt install -y python3-pip"
-    install_tool "jq" "sudo apt install -y jq"
-    install_tool "git" "sudo apt install -y git"
+    check_network
 
-    install_go
+    echo "[*] Installing system dependencies..."
+    sudo apt update
+    sudo apt install -y python3 python3-pip jq git curl wget
 
-    # PATH FIX (VERY IMPORTANT)
-    export PATH="$HOME/go/bin:$HOME/.local/bin:$PATH"
+    install_go_latest
 
-    install_tool "nuclei" "go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
-    install_tool "httpx" "go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
-    install_tool "katana" "go install github.com/projectdiscovery/katana/cmd/katana@latest"
-    install_tool "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
-    install_tool "gauplus" "go install github.com/bp0lr/gauplus@latest"
-    install_tool "hakrawler" "go install github.com/hakluke/hakrawler@latest"
+    # PATH FIX (CRITICAL FOR WSL)
+    export PATH="/usr/local/go/bin:$HOME/go/bin:$HOME/.local/bin:$PATH"
+
+    echo "[*] Installing Python modules..."
+    install_python_module "requests"
+    install_python_module "urllib3"
+
+    echo "[*] Installing Go tools..."
+
+    go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+    go install github.com/projectdiscovery/httpx/cmd/httpx@latest
+    go install github.com/projectdiscovery/katana/cmd/katana@latest
+    go install github.com/tomnomnom/waybackurls@latest
+    go install github.com/bp0lr/gauplus@latest
+    go install github.com/hakluke/hakrawler@latest
 
     install_uro
+
+    echo "[*] Setting up external tools..."
 
     # ParamSpider
     if [ ! -d "$HOME/ParamSpider" ]; then
         echo "[*] Cloning ParamSpider..."
         git clone https://github.com/0xKayala/ParamSpider "$HOME/ParamSpider"
+    else
+        echo "[OK] ParamSpider already exists"
     fi
 
-    # Templates
+    # Nuclei Templates
     if [ ! -d "$HOME/nuclei-templates" ]; then
         echo "[*] Cloning nuclei templates..."
         git clone https://github.com/projectdiscovery/nuclei-templates "$HOME/nuclei-templates"
+    else
+        echo "[OK] Nuclei templates already exist"
     fi
 
-    echo "[*] Dependencies ready ✅"
+    echo "======================================"
+    echo "✅ Dependencies Installed Successfully"
+    echo "======================================"
 }
