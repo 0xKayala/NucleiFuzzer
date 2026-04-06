@@ -33,6 +33,20 @@ run_nuclei() {
         exit 1
     fi
 
+    # ==========================================
+    # 🔍 TEMPLATE CHECK (CRITICAL FIX)
+    # ==========================================
+
+    DAST_DIR="$TEMPLATE_DIR/dast"
+
+    if [ ! -d "$DAST_DIR" ] || [ -z "$(ls -A "$DAST_DIR" 2>/dev/null)" ]; then
+        echo "[WARN] DAST templates not found → fallback to tags"
+
+        TEMPLATE_MODE="-tags xss,sqli,ssrf,lfi,rce"
+    else
+        TEMPLATE_MODE="-t $DAST_DIR"
+    fi    
+
     echo -e "${GREEN}[Nuclei] Running DAST-focused scan...${RESET}"
 
     nuclei \
@@ -41,8 +55,12 @@ run_nuclei() {
         -severity critical,high,medium \
         -rl "$RATE_LIMIT" \
         -jsonl \
-        -silent
+        -silent \
         -o "$output"
+
+    # ==========================================
+    # ✅ OUTPUT VALIDATION
+    # ==========================================        
 
     if [ ! -s "$output" ]; then
         echo "[WARN] No vulnerabilities found"
