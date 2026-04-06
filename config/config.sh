@@ -85,7 +85,7 @@ filter_param_urls() {
     local input="$1"
     local output="$2"
 
-    grep -E "$PARAM_PATTERN" "$input" > "$output" 2>/dev/null
+    grep -aE "$PARAM_PATTERN" "$input" > "$output" 2>/dev/null
 }
 
 # Extract high-value endpoints (auth/api/admin/etc)
@@ -93,7 +93,7 @@ filter_high_value_urls() {
     local input="$1"
     local output="$2"
 
-    grep -Ei "$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" > "$output" 2>/dev/null
+    grep -aEi "$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" > "$output" 2>/dev/null
 }
 
 # Combine smart filtering (optional future use)
@@ -101,8 +101,19 @@ smart_filter_urls() {
     local input="$1"
     local output="$2"
 
-    grep -Ei "$PARAM_PATTERN|$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" \
-        | sort -u > "$output" 2>/dev/null
+    TEMP_FILE="$(mktemp)"
+
+    # Step 1: Apply filtering safely
+    grep -aEi "$PARAM_PATTERN|$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" \
+        | sort -u > "$TEMP_FILE" 2>/dev/null
+
+    # Step 2: Fallback if empty
+    if [ ! -s "$TEMP_FILE" ]; then
+        echo "[WARN] Smart filter too aggressive → fallback to original URLs"
+        cp "$input" "$TEMP_FILE"
+    fi
+
+    mv "$TEMP_FILE" "$output"
 }
 
 # ------------------------------------------
