@@ -49,18 +49,18 @@ echo "  -v, --verbose           Verbose mode"
 echo "  -k, --keep-temp         Keep temp files"
 echo "      --ai                Enable AI analysis"
 echo "      --doctor            Run diagnostics"
-echo "      --update            Update tools"
+echo "      --update            Smart update engine"
 echo ""
 exit 0
 }
 
 # =========================
-# 📦 BASE DIR (FIXED)
+# 📦 BASE DIR RESOLUTION (CRITICAL FIX)
 # =========================
 SCRIPT_PATH="$(readlink -f "$0")"
 BASE_DIR="$(dirname "$SCRIPT_PATH")"
 
-# If installed in /usr/bin, redirect to /opt
+# If installed globally → use /opt
 if [[ "$BASE_DIR" == "/usr/bin" ]]; then
     BASE_DIR="/opt/nucleifuzzer"
 fi
@@ -70,11 +70,12 @@ fi
 # =========================
 if [ ! -d "$BASE_DIR/core" ]; then
     echo "[ERROR] Core modules not found at $BASE_DIR"
+    echo "[FIX] Reinstall tool using install.sh"
     exit 1
 fi
 
 # =========================
-# ⚙️ DEFAULTS
+# ⚙️ DEFAULT FLAGS
 # =========================
 VERBOSE=false
 KEEP_TEMP=false
@@ -83,7 +84,7 @@ DOCTOR_MODE=false
 UPDATE_MODE=false
 
 # =========================
-# 🧾 LOG FUNCTION (FIXED)
+# 🧾 LOG FUNCTION
 # =========================
 log() {
     local level="$1"
@@ -150,14 +151,14 @@ if [ "$UPDATE_MODE" = true ]; then
 fi
 
 # =========================
-# 🚫 VALIDATION
+# 🚫 INPUT VALIDATION
 # =========================
 if [ -z "$DOMAIN" ] && [ -z "$FILENAME" ]; then
     show_help
 fi
 
 # =========================
-# 🔧 DEPENDENCIES
+# 🔧 DEPENDENCIES CHECK
 # =========================
 setup_dependencies
 
@@ -177,13 +178,15 @@ AI_FILE="$OUTPUT_DIR/ai_analysis.txt"
 touch "$LOG_FILE"
 > "$RAW_FILE"
 
+# =========================
+# 🚀 START
+# =========================
 show_banner
 echo -e "${GREEN}[*] Starting Scan Engine...${RESET}"
 
 # =========================
-# 🚀 EXECUTION FLOW
+# 🔎 RECON + CRAWL
 # =========================
-
 if [ -n "$DOMAIN" ]; then
     recon "$DOMAIN" "$RAW_FILE"
     crawl "$DOMAIN" "$RAW_FILE"
@@ -213,7 +216,7 @@ group_by_severity "$JSON_FILE"
 generate_html_report "$JSON_FILE" "$HTML_FILE"
 
 # =========================
-# 🧠 AI
+# 🧠 AI ANALYSIS
 # =========================
 if [ "$AI_MODE" = true ]; then
     run_ai_analysis "$JSON_FILE" "$AI_FILE"
