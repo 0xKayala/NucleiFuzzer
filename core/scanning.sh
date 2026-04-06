@@ -22,16 +22,25 @@ run_nuclei() {
     local output="$2"
 
     echo -e "${GREEN}[httpx] Probing live hosts...${RESET}"
-
-    httpx -silent \
-        -mc 200,204,301,302,401,403,405,500,502,503,504 \
-        -l "$input" \
-        -o "$input.live"
-
+    
+    if [ "$VERBOSE" = true ]; then
+        httpx -mc 200,204,301,302,401,403,405,500,502,503,504 \
+            -l "$input" \
+            -o "$input.live"
+    else
+        httpx -silent \
+            -mc 200,204,301,302,401,403,405,500,502,503,504 \
+            -l "$input" \
+            -o "$input.live" \
+            > /dev/null 2>&1
+    fi
+    
     if [ ! -s "$input.live" ]; then
         echo "[ERROR] No live hosts found"
         exit 1
     fi
+    
+    echo "[OK] Live hosts ready"
 
     # ==========================================
     # 🔍 TEMPLATE CHECK (CRITICAL FIX)
