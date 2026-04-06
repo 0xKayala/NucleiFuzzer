@@ -113,7 +113,7 @@ install_go_latest() {
 
     sudo rm -rf /usr/local/go
 
-    wget -q https://go.dev/dl/go1.25.8.linux-amd64.tar.gz -O /tmp/go.tar.gz
+    wget -q https://go.dev/dl/go1.26.1.linux-amd64.tar.gz -O /tmp/go.tar.gz
     sudo tar -C /usr/local -xzf /tmp/go.tar.gz
 
     export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
