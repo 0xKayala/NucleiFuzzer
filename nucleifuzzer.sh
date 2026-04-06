@@ -90,7 +90,7 @@ log() {
     local level="$1"
     local message="$2"
 
-    [ -z "$LOG_FILE" ] && LOG_FILE="/tmp/nucleifuzzer.log"
+    [ -z "$LOG_FILE" ] && LOG_FILE="/tmp/nf.log"
 
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message" >> "$LOG_FILE"
 
@@ -168,12 +168,12 @@ setup_dependencies
 OUTPUT_DIR="${OUTPUT_DIR:-./output}"
 mkdir -p "$OUTPUT_DIR"
 
-LOG_FILE="$OUTPUT_DIR/nucleifuzzer.log"
+LOG_FILE="$OUTPUT_DIR/nf.log"
 RAW_FILE="$OUTPUT_DIR/raw.txt"
 VALIDATED_FILE="$OUTPUT_DIR/validated.txt"
 JSON_FILE="$OUTPUT_DIR/results.json"
 HTML_FILE="$OUTPUT_DIR/report.html"
-AI_FILE="$OUTPUT_DIR/ai_analysis.txt"
+AI_FILE="$OUTPUT_DIR/ai.txt"
 
 touch "$LOG_FILE"
 > "$RAW_FILE"
@@ -212,13 +212,17 @@ run_nuclei "$VALIDATED_FILE" "$JSON_FILE"
 # =========================
 # 📊 REPORTING
 # =========================
-group_by_severity "$JSON_FILE"
-generate_html_report "$JSON_FILE" "$HTML_FILE"
+if [ -s "$JSON_FILE" ]; then
+    group_by_severity "$JSON_FILE"
+    generate_html_report "$JSON_FILE" "$HTML_FILE"
+else
+    echo "[WARN] No JSON results to process"
+fi
 
 # =========================
 # 🧠 AI ANALYSIS
 # =========================
-if [ "$AI_MODE" = true ]; then
+if [ "$AI_MODE" = true ] && [ -s "$JSON_FILE" ]; then
     run_ai_analysis "$JSON_FILE" "$AI_FILE"
 fi
 
