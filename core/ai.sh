@@ -23,17 +23,23 @@ run_ai_analysis() {
         echo "====== AI SECURITY INSIGHTS ======"
         echo "Critical: $CRITICAL"
         echo "High: $HIGH"
+        echo "Medium: $MEDIUM"
+        echo ""
 
         if [ "$CRITICAL" -gt 0 ]; then
-            echo "⚠️ Immediate patch required"
+            echo "🚨 Immediate action required (Critical vulnerabilities found)"
         fi
 
         if grep -qi "idor" "$json"; then
-            echo "💡 Possible IDOR → check access control"
+            echo "💡 IDOR detected → Check access control"
         fi
 
         if grep -qi "xss" "$json"; then
-            echo "💡 XSS → test payload variations"
+            echo "💡 XSS detected → Validate input sanitization"
+        fi
+
+        if grep -qi "ssrf" "$json"; then
+            echo "💡 SSRF risk → Test internal endpoints"
         fi
 
     } > "$output"
