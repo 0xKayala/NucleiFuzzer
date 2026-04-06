@@ -50,6 +50,8 @@ echo "  -k, --keep-temp         Keep temp files"
 echo "      --ai                Enable AI analysis"
 echo "      --doctor            Run diagnostics"
 echo "      --update            Smart update engine"
+echo "      --fast              Fast scan mode"
+echo "      --deep              Deep scan mode"
 echo ""
 exit 0
 }
@@ -82,6 +84,8 @@ KEEP_TEMP=false
 AI_MODE=false
 DOCTOR_MODE=false
 UPDATE_MODE=false
+FAST_MODE=false
+DEEP_MODE=false
 
 # =========================
 # 🧾 LOG FUNCTION
@@ -128,6 +132,8 @@ while [[ $# -gt 0 ]]; do
         --ai) AI_MODE=true; shift ;;
         --doctor) DOCTOR_MODE=true; shift ;;
         --update) UPDATE_MODE=true; shift ;;
+        --fast) FAST_MODE=true; shift ;;
+        --deep) DEEP_MODE=true; shift ;;
         *) echo "[ERROR] Unknown option: $1"; show_help ;;
     esac
 done
@@ -205,9 +211,9 @@ fi
 validate_urls "$RAW_FILE" "$VALIDATED_FILE"
 
 # =========================
-# ⚡ SCANNING
+# ⚡ SCANNING (MODE-AWARE)
 # =========================
-run_nuclei "$VALIDATED_FILE" "$JSON_FILE"
+run_nuclei "$VALIDATED_FILE" "$JSON_FILE" "$FAST_MODE" "$DEEP_MODE"
 
 # =========================
 # 📊 REPORTING
