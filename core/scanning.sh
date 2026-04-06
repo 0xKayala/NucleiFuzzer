@@ -37,8 +37,8 @@ run_nuclei() {
     # 🔍 TEMPLATE CHECK (CRITICAL FIX)
     # ==========================================
 
-    if [ ! -d "$TEMPLATE_DIR" ]; then
-        echo "[ERROR] Nuclei templates not found at $TEMPLATE_DIR"
+    if [ ! -d "$TEMPLATE_DIR" ] || [ -z "$(ls -A "$TEMPLATE_DIR" 2>/dev/null)" ]; then
+        echo "[ERROR] Nuclei templates missing or empty at $TEMPLATE_DIR"
         echo "[FIX] Run: nf --update"
         exit 1
     fi
@@ -48,11 +48,13 @@ run_nuclei() {
     nuclei \
         -l "$input.live" \
         -t "$TEMPLATE_DIR" \
+        -dast \
         -tags xss,sqli,ssrf,lfi,rce,idor,auth-bypass,cve,takeover,exposure,config,wordpress \
         -severity critical,high,medium \
         -rl "$RATE_LIMIT" \
         -jsonl \
         -silent \
+        -no-meta \
         -o "$output"
 
     # ==========================================
