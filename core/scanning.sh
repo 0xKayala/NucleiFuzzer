@@ -37,21 +37,18 @@ run_nuclei() {
     # 🔍 TEMPLATE CHECK (CRITICAL FIX)
     # ==========================================
 
-    DAST_DIR="$TEMPLATE_DIR/dast"
-
-    if [ ! -d "$DAST_DIR" ] || [ -z "$(ls -A "$DAST_DIR" 2>/dev/null)" ]; then
-        echo "[WARN] DAST templates not found → fallback to tags"
-
-        TEMPLATE_MODE="-tags xss,sqli,ssrf,lfi,rce,idor,auth-bypass,cve,takeover,exposure,config,wordpress,"
-    else
-        TEMPLATE_MODE="-t $DAST_DIR"
-    fi    
+    if [ ! -d "$TEMPLATE_DIR" ]; then
+        echo "[ERROR] Nuclei templates not found at $TEMPLATE_DIR"
+        echo "[FIX] Run: nf --update"
+        exit 1
+    fi
 
     echo -e "${GREEN}[Nuclei] Running DAST-focused scan...${RESET}"
 
     nuclei \
         -l "$input.live" \
-        -t "$TEMPLATE_DIR/dast/" \
+        -t "$TEMPLATE_DIR" \
+        -tags xss,sqli,ssrf,lfi,rce,idor,auth-bypass,cve,takeover,exposure,config,wordpress \
         -severity critical,high,medium \
         -rl "$RATE_LIMIT" \
         -jsonl \
