@@ -15,6 +15,7 @@ recon() {
     TMP_FILE=$(mktemp)
 
     # ParamSpider (safe execution)
+    echo -e "${GREEN}[ParamSpider] Collecting URLs...${RESET}"
     if [ -f "$HOME/ParamSpider/paramspider.py" ]; then
         python3 "$HOME/ParamSpider/paramspider.py" \
             -d "$target" \
@@ -22,14 +23,18 @@ recon() {
             --quiet \
             -o "$TMP_FILE" 2>/dev/null
 
-        cat "$TMP_FILE" >> "$output_file" 2>/dev/null
+        cat "$TMP_FILE" >> "$output_file"
+        echo "[OK] ParamSpider completed"
     else
         echo "[WARN] ParamSpider not found"
     fi
 
     # Passive sources (safe)
-    echo "$target" | waybackurls 2>/dev/null >> "$output_file"
-    echo "$target" | gauplus -subs 2>/dev/null >> "$output_file"
+    echo -e "${GREEN}[Waybackurls] Fetching URLs...${RESET}"
+    echo "$target" | waybackurls >> "$output_file" 2>/dev/null
+
+    echo -e "${GREEN}[Gauplus] Collecting URLs...${RESET}"
+    echo "$target" | gauplus -subs >> "$output_file" 2>/dev/null
 
     rm -f "$TMP_FILE"
 
