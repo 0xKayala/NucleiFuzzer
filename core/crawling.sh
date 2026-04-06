@@ -15,10 +15,12 @@ crawl() {
     TMP_FILE=$(mktemp)
 
     # Hakrawler
-    echo "$target" | hakrawler -d 3 -subs -u 2>/dev/null >> "$TMP_FILE"
+    echo -e "${GREEN}[Hakrawler] Crawling...${RESET}"
+    echo "$target" | hakrawler -d 3 -subs -u >> "$TMP_FILE" 2>/dev/null
 
     # Katana
-    echo "$target" | katana -d 3 -silent -follow-redirects 2>/dev/null >> "$TMP_FILE"
+    echo -e "${GREEN}[Katana] Deep crawling...${RESET}"
+    echo "$target" | katana -d 3 -silent -follow-redirects >> "$TMP_FILE" 2>/dev/null
 
     # Merge results safely
     if [ -s "$TMP_FILE" ]; then
