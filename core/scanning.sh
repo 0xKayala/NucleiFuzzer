@@ -42,7 +42,7 @@ run_nuclei() {
     if [ ! -d "$DAST_DIR" ] || [ -z "$(ls -A "$DAST_DIR" 2>/dev/null)" ]; then
         echo "[WARN] DAST templates not found → fallback to tags"
 
-        TEMPLATE_MODE="-tags xss,sqli,ssrf,lfi,rce"
+        TEMPLATE_MODE="-tags xss,sqli,ssrf,lfi,rce,idor,auth-bypass"
     else
         TEMPLATE_MODE="-t $DAST_DIR"
     fi    
