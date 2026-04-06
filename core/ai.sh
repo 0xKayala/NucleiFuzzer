@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# ==========================================
+# 🧠 AI ANALYSIS MODULE (ENHANCED)
+# ==========================================
+
 run_ai_analysis() {
     local json="$1"
     local output="$2"
@@ -9,10 +13,11 @@ run_ai_analysis() {
         return
     fi
 
-    echo -e "[*] Running AI Analysis..."
+    echo -e "${BLUE}[*] Running AI Analysis...${RESET}"
 
     CRITICAL=$(grep -c '"severity":"critical"' "$json")
     HIGH=$(grep -c '"severity":"high"' "$json")
+    MEDIUM=$(grep -c '"severity":"medium"' "$json")
 
     {
         echo "====== AI SECURITY INSIGHTS ======"
