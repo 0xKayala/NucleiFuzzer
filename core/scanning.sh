@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# ==========================================
+# ⚡ SCANNING MODULE (DAST + CLEAN)
+# ==========================================
+
 validate_urls() {
     local input="$1"
     local output="$2"
@@ -17,22 +21,31 @@ run_nuclei() {
     local input="$1"
     local output="$2"
 
-    echo -e "${BLUE}[*] Probing live hosts...${RESET}"
-    httpx -silent -l "$input" > "$input.live"
+    echo -e "${GREEN}[httpx] Probing live hosts...${RESET}"
+
+    httpx -silent \
+        -mc 200,204,301,302,401,403,405,500,502,503,504 \
+        -l "$input" \
+        -o "$input.live"
 
     if [ ! -s "$input.live" ]; then
         echo "[ERROR] No live hosts found"
         exit 1
     fi
 
-    echo -e "${BLUE}[*] Running Nuclei scan...${RESET}"
+    echo -e "${GREEN}[Nuclei] Running DAST-focused scan...${RESET}"
 
-    nuclei -l "$input.live" \
-        -severity critical,high,medium,low \
+    nuclei \
+        -l "$input.live" \
+        -t "$TEMPLATE_DIR/dast/" \
+        -severity critical,high,medium \
         -rl "$RATE_LIMIT" \
-        -jsonl > "$output"
+        -json \
+        -o "$output"
 
     if [ ! -s "$output" ]; then
         echo "[WARN] No vulnerabilities found"
+    else
+        echo "[OK] Nuclei scan completed"
     fi
 }
