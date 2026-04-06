@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# ⬆️ NUCLEIFUZZER UPDATE ENGINE
+# ⬆️ NUCLEIFUZZER UPDATE ENGINE (SMART + FAST)
 # ==========================================
 
 # ==========================================
@@ -17,7 +17,19 @@ setup_update_env() {
     export GOPROXY=https://proxy.golang.org,direct
     export GOSUMDB=off
     export GOTOOLCHAIN=local
+}
 
+# ==========================================
+# 🌐 INTERNET CHECK (NEW)
+# ==========================================
+
+check_network_update() {
+
+    if command -v curl &>/dev/null; then
+        curl -Is https://google.com --max-time 5 &>/dev/null && return 0
+    fi
+
+    return 1
 }
 
 # ==========================================
@@ -41,35 +53,25 @@ get_version() {
 }
 
 # ==========================================
-# 🔄 SMART GO TOOL UPDATE
+# 🔄 SMART GO TOOL UPDATE (FIXED)
 # ==========================================
 
 update_go_tool() {
     local tool_name="$1"
     local install_cmd="$2"
 
+    # Skip if already installed (FAST MODE)
     if command -v "$tool_name" &>/dev/null; then
+        echo "[OK] $tool_name already installed → skipping"
+        return
+    fi
 
-        echo "[*] Checking $tool_name..."
+    echo "[*] Installing $tool_name..."
 
-        CURRENT_VERSION=$(get_version "$tool_name")
-        echo "[INFO] Current: $CURRENT_VERSION"
-
-        # Attempt update silently
-        eval "$install_cmd" &>/dev/null
-
-        NEW_VERSION=$(get_version "$tool_name")
-
-        if [ "$CURRENT_VERSION" == "$NEW_VERSION" ]; then
-            echo "[OK] $tool_name is already up-to-date"
-        else
-            echo "[UPDATED] $tool_name → $NEW_VERSION"
-        fi
-
-    else
-        echo "[WARN] $tool_name not found → installing..."
-        eval "$install_cmd"
+    if eval "$install_cmd" &>/dev/null; then
         echo "[OK] $tool_name installed"
+    else
+        echo "[WARN] Failed to install $tool_name"
     fi
 }
 
@@ -79,7 +81,7 @@ update_go_tool() {
 
 update_go_tools() {
 
-    echo "[*] Updating Go-based tools..."
+    echo "[*] Checking Go-based tools..."
 
     update_go_tool "nuclei" "go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
     update_go_tool "httpx" "go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
@@ -87,7 +89,6 @@ update_go_tools() {
     update_go_tool "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
     update_go_tool "gauplus" "go install github.com/bp0lr/gauplus@latest"
     update_go_tool "hakrawler" "go install github.com/hakluke/hakrawler@latest"
-
 }
 
 # ==========================================
@@ -96,28 +97,27 @@ update_go_tools() {
 
 update_resources() {
 
-    echo "[*] Updating external resources..."
+    echo "[*] Checking external resources..."
 
     # Nuclei Templates
     if [ -d "$HOME/nuclei-templates/.git" ]; then
-        echo "[*] Updating nuclei templates..."
-        cd "$HOME/nuclei-templates" && git pull --quiet && cd - &>/dev/null
-        echo "[OK] Templates updated"
+        echo "[OK] Templates already present"
     else
         echo "[*] Cloning nuclei templates..."
-        git clone https://github.com/projectdiscovery/nuclei-templates "$HOME/nuclei-templates"
+        git clone https://github.com/projectdiscovery/nuclei-templates "$HOME/nuclei-templates" &>/dev/null \
+            && echo "[OK] Templates installed" \
+            || echo "[WARN] Failed to clone templates"
     fi
 
     # ParamSpider
     if [ -d "$HOME/ParamSpider/.git" ]; then
-        echo "[*] Updating ParamSpider..."
-        cd "$HOME/ParamSpider" && git pull --quiet && cd - &>/dev/null
-        echo "[OK] ParamSpider updated"
+        echo "[OK] ParamSpider already present"
     else
         echo "[*] Cloning ParamSpider..."
-        git clone https://github.com/0xKayala/ParamSpider "$HOME/ParamSpider"
+        git clone https://github.com/0xKayala/ParamSpider "$HOME/ParamSpider" &>/dev/null \
+            && echo "[OK] ParamSpider installed" \
+            || echo "[WARN] Failed to clone ParamSpider"
     fi
-
 }
 
 # ==========================================
@@ -128,7 +128,6 @@ cleanup_update() {
 
     echo "[*] Cleaning Go cache..."
     go clean -modcache &>/dev/null
-
 }
 
 # ==========================================
@@ -143,14 +142,33 @@ run_update() {
 
     setup_update_env
 
+    # --------------------------------------
+    # 🌐 NETWORK CHECK
+    # --------------------------------------
+    if ! check_network_update; then
+        echo "[WARN] No internet connection → skipping updates"
+        echo "======================================"
+        echo "⚠️ Update skipped (offline mode)"
+        echo "======================================"
+        return
+    fi
+
+    # --------------------------------------
+    # 📦 TOOLS
+    # --------------------------------------
     update_go_tools
 
+    # --------------------------------------
+    # 📂 RESOURCES
+    # --------------------------------------
     update_resources
 
+    # --------------------------------------
+    # 🧹 CLEANUP
+    # --------------------------------------
     cleanup_update
 
     echo "======================================"
     echo "✅ Update completed successfully"
     echo "======================================"
-
 }
