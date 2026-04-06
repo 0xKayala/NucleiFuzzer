@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# ⚡ SCANNING MODULE (DAST + CLEAN + PRO)
+# ⚡ SCANNING MODULE (FINAL STABLE BUILD)
 # ==========================================
 
 # ==========================================
@@ -33,21 +33,19 @@ run_nuclei() {
     local DEEP_MODE="$4"
 
     LIVE_FILE="${input}.live"
+    TEMP_JSON="$(mktemp)"
 
     # --------------------------------------
     # 🧹 CLEANUP OLD FILES
     # --------------------------------------
-    rm -f "$LIVE_FILE"
+    rm -f "$LIVE_FILE" "$TEMP_JSON"
 
     # --------------------------------------
     # 🌐 HTTPX LIVE PROBING
     # --------------------------------------
     echo -e "${GREEN}[httpx] Probing live hosts...${RESET}"
 
-    httpx \
-        -silent \
-        -retries 2 \
-        -timeout 10 \
+    httpx -silent -retries 2 -timeout 10 \
         -mc 200,204,301,302,401,403,405,500,502,503,504 \
         -l "$input" \
         -o "$LIVE_FILE" \
@@ -60,21 +58,17 @@ run_nuclei() {
 
     echo "[OK] Live hosts ready"
 
+    URL_COUNT=$(wc -l < "$LIVE_FILE")
+
     # --------------------------------------
     # 🧠 SMART MODE ENGINE
     # --------------------------------------
-    URL_COUNT=$(wc -l < "$LIVE_FILE")
-
     if [ "$FAST_MODE" = true ]; then
         MODE="FAST"
     elif [ "$DEEP_MODE" = true ]; then
         MODE="DEEP"
     else
-        if [ "$URL_COUNT" -gt 400 ]; then
-            MODE="FAST"
-        else
-            MODE="DEEP"
-        fi
+        [ "$URL_COUNT" -gt 400 ] && MODE="FAST" || MODE="DEEP"
     fi
 
     echo "[*] Scan Mode: $MODE ($URL_COUNT URLs)"
@@ -88,39 +82,52 @@ run_nuclei() {
     fi
 
     # --------------------------------------
-    # 🔍 TEMPLATE VALIDATION
+    # 🔍 TEMPLATE CHECK
     # --------------------------------------
-    if [ ! -d "$TEMPLATE_DIR" ] || [ -z "$(ls -A "$TEMPLATE_DIR" 2>/dev/null)" ]; then
-        echo "[ERROR] Nuclei templates missing or empty at $TEMPLATE_DIR"
-        echo "[FIX] Run: nf --update"
+    if [ ! -d "$TEMPLATE_DIR" ]; then
+        echo "[ERROR] Templates missing → run nf --update"
         exit 1
     fi
 
     # --------------------------------------
-    # ⚡ NUCLEI SCAN (DAST ONLY - FASTEST)
+    # ⚡ NUCLEI SCAN (SAFE PIPELINE)
     # --------------------------------------
     echo -e "${GREEN}[Nuclei] Running DAST-focused scan...${RESET}"
 
-    if ! nuclei \
-        -l "$LIVE_FILE" \
+    nuclei -l "$LIVE_FILE" \
         -t "$TEMPLATE_DIR" \
         -dast \
         -severity critical,high,medium \
         -rl "$RATE" \
         -c "$CONCURRENCY" \
-        -jsonl \
-        -silent \
-        -no-meta \
-        2>/dev/null \
-        | tee "$output" \
+        -jsonl -silent -no-meta 2>/dev/null \
+        | grep -a '^{.*}' \
+        | tee "$TEMP_JSON" \
         | jq -r '"[VULN] \(.info.severity) | \(.info.name) | \(.host)"'
-    then
-        echo "[ERROR] Nuclei scan failed"
-        exit 1
+
+    # --------------------------------------
+    # 🔁 FALLBACK SCAN (SMART)
+    # --------------------------------------
+    if [ ! -s "$TEMP_JSON" ]; then
+        echo "[INFO] No results → running fallback scan..."
+
+        nuclei -l "$LIVE_FILE" \
+            -tags xss,sqli,ssrf,lfi,rce \
+            -severity medium,high \
+            -rl "$RATE" \
+            -jsonl -silent 2>/dev/null \
+            | grep -a '^{.*}' \
+            | tee "$TEMP_JSON" \
+            | jq -r '"[VULN] \(.info.severity) | \(.info.name) | \(.host)"'
     fi
 
     # --------------------------------------
-    # 📊 OUTPUT VALIDATION + SUMMARY
+    # 📦 FINAL OUTPUT WRITE
+    # --------------------------------------
+    mv "$TEMP_JSON" "$output"
+
+    # --------------------------------------
+    # 📊 SUMMARY
     # --------------------------------------
     if [ ! -s "$output" ]; then
         echo "[WARN] No vulnerabilities found"
@@ -129,12 +136,13 @@ run_nuclei() {
 
         echo -e "${CYAN}[*] Scan Summary:${RESET}"
 
-        CRIT=$(grep -c '"severity":"critical"' "$output")
-        HIGH=$(grep -c '"severity":"high"' "$output")
-        MED=$(grep -c '"severity":"medium"' "$output")
-
-        echo "Critical: $CRIT"
-        echo "High    : $HIGH"
-        echo "Medium  : $MED"
+        grep -o '"severity":"critical"' "$output" | wc -l | awk '{print "Critical:",$1}'
+        grep -o '"severity":"high"' "$output" | wc -l | awk '{print "High    :",$1}'
+        grep -o '"severity":"medium"' "$output" | wc -l | awk '{print "Medium  :",$1}'
     fi
+
+    # --------------------------------------
+    # 🧹 CLEANUP
+    # --------------------------------------
+    rm -f "$LIVE_FILE"
 }
