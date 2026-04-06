@@ -40,7 +40,8 @@ run_nuclei() {
         -t "$TEMPLATE_DIR/dast/" \
         -severity critical,high,medium \
         -rl "$RATE_LIMIT" \
-        -json \
+        -jsonl \
+        -silent
         -o "$output"
 
     if [ ! -s "$output" ]; then
