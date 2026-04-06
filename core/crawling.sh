@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🕸️ CRAWLING MODULE (PARALLEL + SMART)
+# 🕸️ CRAWLING MODULE (PARALLEL + SMART MERGE)
 # ==========================================
 
 crawl() {
@@ -22,11 +22,11 @@ crawl() {
     echo -e "${GREEN}[Hakrawler] Crawling...${RESET}"
     (echo "$target" | hakrawler -d 3 -subs -u > "$TMP_DIR/hakrawler.txt" 2>/dev/null) &
 
-    # Katana (deeper crawl)
+    # Katana
     echo -e "${GREEN}[Katana] Deep crawling...${RESET}"
     (echo "$target" | katana -d 3 -silent -follow-redirects > "$TMP_DIR/katana.txt" 2>/dev/null) &
 
-    # Wait for both
+    # Wait for both tools
     wait
 
     # ==========================================
@@ -36,10 +36,10 @@ crawl() {
     cat "$TMP_DIR"/*.txt 2>/dev/null >> "$output_file"
 
     # ==========================================
-    # 🧠 SMART FILTERING (OPTIONAL)
+    # 🧠 SMART FILTERING (HIGH VALUE URLS)
     # ==========================================
 
-    echo -e "${CYAN}[*] Filtering crawled URLs...${RESET}"
+    echo -e "${CYAN}[*] Filtering crawl results...${RESET}"
 
     FILTERED_FILE="$TMP_DIR/filtered.txt"
 
@@ -49,7 +49,7 @@ crawl() {
     fi
 
     # ==========================================
-    # 📉 PERFORMANCE CONTROL
+    # 📉 PERFORMANCE CONTROL (LIMIT SIZE)
     # ==========================================
 
     TOTAL=$(wc -l < "$output_file")
@@ -62,7 +62,7 @@ crawl() {
     fi
 
     # ==========================================
-    # 🛡️ FALLBACK PROTECTION
+    # 🛡️ FALLBACK
     # ==========================================
 
     if [ ! -s "$output_file" ]; then
