@@ -29,41 +29,63 @@ validate_urls() {
 run_nuclei() {
     local input="$1"
     local output="$2"
+    local FAST_MODE="$3"
+    local DEEP_MODE="$4"
+
+    LIVE_FILE="${input}.live"
 
     # --------------------------------------
     # 🧹 CLEANUP OLD FILES
     # --------------------------------------
-    rm -f "$input.live"
+    rm -f "$LIVE_FILE"
 
     # --------------------------------------
     # 🌐 HTTPX LIVE PROBING
     # --------------------------------------
     echo -e "${GREEN}[httpx] Probing live hosts...${RESET}"
 
-    if [ "$VERBOSE" = true ]; then
-        httpx \
-            -retries 2 \
-            -timeout 10 \
-            -mc 200,204,301,302,401,403,405,500,502,503,504 \
-            -l "$input" \
-            -o "$input.live"
-    else
-        httpx \
-            -silent \
-            -retries 2 \
-            -timeout 10 \
-            -mc 200,204,301,302,401,403,405,500,502,503,504 \
-            -l "$input" \
-            -o "$input.live" \
-            > /dev/null 2>&1
-    fi
+    httpx \
+        -silent \
+        -retries 2 \
+        -timeout 10 \
+        -mc 200,204,301,302,401,403,405,500,502,503,504 \
+        -l "$input" \
+        -o "$LIVE_FILE" \
+        > /dev/null 2>&1
 
-    if [ ! -s "$input.live" ]; then
+    if [ ! -s "$LIVE_FILE" ]; then
         echo "[ERROR] No live hosts found"
         exit 1
     fi
 
     echo "[OK] Live hosts ready"
+
+    # --------------------------------------
+    # 🧠 SMART MODE ENGINE
+    # --------------------------------------
+    URL_COUNT=$(wc -l < "$LIVE_FILE")
+
+    if [ "$FAST_MODE" = true ]; then
+        MODE="FAST"
+    elif [ "$DEEP_MODE" = true ]; then
+        MODE="DEEP"
+    else
+        if [ "$URL_COUNT" -gt 400 ]; then
+            MODE="FAST"
+        else
+            MODE="DEEP"
+        fi
+    fi
+
+    echo "[*] Scan Mode: $MODE ($URL_COUNT URLs)"
+
+    if [ "$MODE" = "FAST" ]; then
+        RATE=200
+        CONCURRENCY=80
+    else
+        RATE="$RATE_LIMIT"
+        CONCURRENCY=50
+    fi
 
     # --------------------------------------
     # 🔍 TEMPLATE VALIDATION
@@ -75,22 +97,24 @@ run_nuclei() {
     fi
 
     # --------------------------------------
-    # ⚡ NUCLEI SCAN (DAST + FILTERED)
+    # ⚡ NUCLEI SCAN (DAST ONLY - FASTEST)
     # --------------------------------------
     echo -e "${GREEN}[Nuclei] Running DAST-focused scan...${RESET}"
 
     if ! nuclei \
-        -l "$input.live" \
+        -l "$LIVE_FILE" \
         -t "$TEMPLATE_DIR" \
         -dast \
-        -tags xss,sqli,ssrf,lfi,rce,idor,auth-bypass \
         -severity critical,high,medium \
-        -rl "$RATE_LIMIT" \
+        -rl "$RATE" \
+        -c "$CONCURRENCY" \
         -jsonl \
         -silent \
         -no-meta \
-        -o "$output"; then
-
+        2>/dev/null \
+        | tee "$output" \
+        | jq -r '"[VULN] \(.info.severity) | \(.info.name) | \(.host)"'
+    then
         echo "[ERROR] Nuclei scan failed"
         exit 1
     fi
