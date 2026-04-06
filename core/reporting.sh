@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# ==========================================
+# 📊 REPORTING MODULE (CLEAN + PROFESSIONAL)
+# ==========================================
+
 group_by_severity() {
     local file="$1"
 
@@ -31,18 +35,35 @@ generate_html_report() {
 <style>
 body { font-family: Arial; background:#111; color:#eee; }
 h1 { color:#00ffcc; }
-pre { background:#222; padding:10px; }
+table { width:100%; border-collapse: collapse; }
+th, td { padding:10px; border:1px solid #333; }
+th { background:#222; }
+.critical { color:red; }
+.high { color:orange; }
+.medium { color:yellow; }
 </style>
 </head>
 <body>
-<h1>NucleiFuzzer Scan Results</h1>
-<pre>
+
+<h1>NucleiFuzzer Report</h1>
+<table>
+<tr>
+<th>Severity</th>
+<th>Name</th>
+<th>URL</th>
+</tr>
 EOF
+
+    jq -r '
+    [.info.severity, .info.name, .host] | @tsv
+    ' "$json" | while IFS=$'\t' read -r sev name url; do
+        echo "<tr><td class=\"$sev\">$sev</td><td>$name</td><td>$url</td></tr>" >> "$html"
+    done
 
     cat "$json" >> "$html"
 
     cat <<EOF >> "$html"
-</pre>
+</table>
 </body>
 </html>
 EOF
