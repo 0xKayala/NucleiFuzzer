@@ -1,15 +1,55 @@
 #!/bin/bash
 
 # ==========================================
-# ⚙️ GLOBAL CONFIGURATION
+# ⚙️ GLOBAL CONFIGURATION (PRO VERSION)
 # ==========================================
 
+# Output settings
 OUTPUT_DIR="${OUTPUT_DIR:-./output}"
 RATE_LIMIT="${RATE_LIMIT:-50}"
+
+# Nuclei templates path
 TEMPLATE_DIR="${TEMPLATE_DIR:-$HOME/nuclei-templates}"
+
+# Home directory
 HOME_DIR="$HOME"
 
-EXCLUDED_EXTENSIONS="png,jpg,jpeg,gif,svg,css,js,woff,woff2,ttf,mp4,pdf"
+# ==========================================
+# 🎯 SMART URL FILTERING (HIGH SIGNAL)
+# ==========================================
+
+# 🚫 EXCLUDED EXTENSIONS (Noise Reduction)
+# Goal: Remove static, binary, and non-attack-surface files
+
+EXCLUDED_EXTENSIONS="\
+png,jpg,jpeg,gif,svg,webp,ico,\
+css,js,map,\
+woff,woff2,eot,ttf,otf,\
+mp4,mp3,avi,mov,wmv,flv,mkv,\
+pdf,doc,docx,xls,xlsx,ppt,pptx,\
+zip,rar,7z,tar,gz,iso,\
+exe,bin,dll,deb,rpm,\
+txt,log,\
+apk,ipa,\
+swf"
+
+# ==========================================
+# 🎯 HIGH VALUE ENDPOINT KEYWORDS (FOR FUTURE FILTERING)
+# ==========================================
+
+# These are NOT exclusions — used for prioritization later
+HIGH_VALUE_KEYWORDS="\
+api,auth,login,admin,user,account,\
+token,session,redirect,callback,\
+file,upload,download,search,\
+id,query,debug,test"
+
+# ==========================================
+# 🎯 PARAMETER PATTERN (ATTACK SURFACE)
+# ==========================================
+
+# Used to identify dynamic endpoints
+PARAM_PATTERN="=|\?|&"
 
 # ==========================================
 # 🎨 COLORS
@@ -36,5 +76,45 @@ normalize_url() {
     echo "$url"
 }
 
-# Ensure PATH (WSL FIX)
+# ==========================================
+# 🧠 SMART FILTER FUNCTIONS (FUTURE-READY)
+# ==========================================
+
+# Extract parameterized URLs (high value)
+filter_param_urls() {
+    local input="$1"
+    local output="$2"
+
+    grep -E "$PARAM_PATTERN" "$input" > "$output" 2>/dev/null
+}
+
+# Extract high-value endpoints (auth/api/admin/etc)
+filter_high_value_urls() {
+    local input="$1"
+    local output="$2"
+
+    grep -Ei "$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" > "$output" 2>/dev/null
+}
+
+# Combine smart filtering (optional future use)
+smart_filter_urls() {
+    local input="$1"
+    local output="$2"
+
+    grep -Ei "$PARAM_PATTERN|$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" \
+        | sort -u > "$output"
+}
+
+# ==========================================
+# 🛠️ ENVIRONMENT FIX (WSL + GO + PIPX)
+# ==========================================
+
 export PATH="$HOME/go/bin:$HOME/.local/bin:$PATH"
+
+# ==========================================
+# 📁 AUTO-CREATE OUTPUT DIRECTORY
+# ==========================================
+
+if [ ! -d "$OUTPUT_DIR" ]; then
+    mkdir -p "$OUTPUT_DIR" 2>/dev/null
+fi
