@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🩺 NUCLEIFUZZER DOCTOR MODE (v3.1)
+# 🩺 NUCLEIFUZZER DOCTOR MODE (v3.2)
 # ==========================================
 
 # ==========================================
@@ -102,6 +102,25 @@ check_output_dir() {
 }
 
 # ==========================================
+# 📦 TEMPLATE CHECK (NEW)
+# ==========================================
+
+check_templates() {
+
+    echo "[*] Checking nuclei templates..."
+
+    TEMPLATE_DIR="${TEMPLATE_DIR:-$HOME/nuclei-templates}"
+
+    if [ -d "$TEMPLATE_DIR" ] && [ "$(ls -A "$TEMPLATE_DIR" 2>/dev/null)" ]; then
+        echo "[OK] Templates available"
+    else
+        echo "[FAIL] Templates missing or empty"
+        echo "[FIX] Run: nf --update"
+        ((ISSUES++))
+    fi
+}
+
+# ==========================================
 # 🚀 MAIN DOCTOR FUNCTION
 # ==========================================
 
@@ -135,6 +154,21 @@ run_doctor() {
 
     echo ""
     check_output_dir
+
+    echo ""
+    check_templates
+
+    # --------------------------------------
+    # 🧠 SCAN READINESS (NEW)
+    # --------------------------------------
+    echo ""
+    echo "[*] Scan readiness..."
+
+    if [ "$ISSUES" -eq 0 ]; then
+        echo "[OK] System ready for scanning"
+    else
+        echo "[WARN] Fix issues before scanning"
+    fi
 
     echo ""
     echo "======================================"
