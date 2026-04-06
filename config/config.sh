@@ -102,7 +102,20 @@ smart_filter_urls() {
     local output="$2"
 
     grep -Ei "$PARAM_PATTERN|$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" \
-        | sort -u > "$output"
+        | sort -u > "$output" 2>/dev/null
+}
+
+# ------------------------------------------
+# ⚡ PERFORMANCE HELPERS
+# ------------------------------------------
+
+# Limit huge URL lists (prevents slow scans)
+limit_urls() {
+    local input="$1"
+    local output="$2"
+    local limit="${3:-1000}"
+
+    head -n "$limit" "$input" > "$output"
 }
 
 # ==========================================
