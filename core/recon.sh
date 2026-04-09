@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🔍 RECON MODULE (PARALLEL + SMART FILTER)
+# 🔍 RECON MODULE (PARALLEL + AI + PLUGIN READY)
 # ==========================================
 
 recon() {
@@ -13,6 +13,17 @@ recon() {
     echo -e "${BLUE}[*] Recon started for $target${RESET}"
 
     TMP_DIR=$(mktemp -d)
+
+    RAW_FILE="$TMP_DIR/raw.txt"
+    CLEAN_FILE="$TMP_DIR/clean.txt"
+    FILTERED_FILE="$TMP_DIR/filtered.txt"
+
+    # ------------------------------------------
+    # 🔌 PRE-RECON PLUGINS
+    # ------------------------------------------
+    if declare -f run_plugins >/dev/null; then
+        run_plugins "pre_recon"
+    fi
 
     # ==========================================
     # ⚡ PARALLEL URL COLLECTION
@@ -41,51 +52,66 @@ recon() {
     # 🧩 MERGE RESULTS
     # ==========================================
 
-    cat "$TMP_DIR"/*.txt 2>/dev/null >> "$output_file"
+    cat "$TMP_DIR"/*.txt 2>/dev/null > "$RAW_FILE"
 
     # ==========================================
-    # 🧠 SMART FILTERING (FIXED + SAFE)
+    # 🧹 CLEAN + NORMALIZE
     # ==========================================
 
-    echo -e "${CYAN}[*] Applying smart filtering...${RESET}"
+    grep -E '^https?://' "$RAW_FILE" \
+        | sort -u > "$CLEAN_FILE"
 
-    CLEAN_FILE="$TMP_DIR/clean.txt"
-    URL_FILE="$TMP_DIR/urls.txt"
-    FILTERED_FILE="$TMP_DIR/filtered.txt"
+    if [ ! -s "$CLEAN_FILE" ]; then
+        echo "[WARN] No valid URLs found → fallback to raw"
+        cp "$RAW_FILE" "$CLEAN_FILE"
+    fi
 
-    # Step 1: Remove binary garbage
-    strings "$output_file" > "$CLEAN_FILE" 2>/dev/null
+    # ==========================================
+    # 🧠 SMART + AI FILTERING
+    # ==========================================
 
-    # Step 2: Extract only valid URLs
-    grep -E '^https?://' "$CLEAN_FILE" > "$URL_FILE" 2>/dev/null
+    echo -e "${CYAN}[*] Applying intelligent filtering...${RESET}"
 
-    # Step 3: Apply smart filtering (if available)
+    # Step 1: Smart filter (baseline)
     if declare -f smart_filter_urls >/dev/null; then
-        smart_filter_urls "$URL_FILE" "$FILTERED_FILE"
+        smart_filter_urls "$CLEAN_FILE" "$FILTERED_FILE"
     else
-        cp "$URL_FILE" "$FILTERED_FILE"
+        cp "$CLEAN_FILE" "$FILTERED_FILE"
     fi
 
-    # Step 4: Fallback if filter removes too much
-    if [ ! -s "$FILTERED_FILE" ]; then
-        echo "[WARN] Smart filtering removed too much → fallback to raw URLs"
-        cp "$URL_FILE" "$FILTERED_FILE"
+    # Step 2: AI filter (if enabled)
+    if declare -f ai_filter_urls >/dev/null; then
+        AI_FILE="$TMP_DIR/ai_filtered.txt"
+        ai_filter_urls "$FILTERED_FILE" "$AI_FILE"
+
+        if [ -s "$AI_FILE" ]; then
+            mv "$AI_FILE" "$FILTERED_FILE"
+        fi
     fi
+
+    # Step 3: Fallback protection
+    if [ ! -s "$FILTERED_FILE" ]; then
+        echo "[WARN] Filtering removed too much → fallback to clean URLs"
+        cp "$CLEAN_FILE" "$FILTERED_FILE"
+    fi
+
+    # ==========================================
+    # 🔌 POST-RECON PLUGINS
+    # ==========================================
+
+    export RAW_URLS="$FILTERED_FILE"
+
+    if declare -f run_plugins >/dev/null; then
+        run_plugins "post_recon"
+    fi
+
+    # ==========================================
+    # 📦 FINAL OUTPUT
+    # ==========================================
 
     mv "$FILTERED_FILE" "$output_file"
 
-    # ==========================================
-    # 📉 PERFORMANCE CONTROL (LIMIT SIZE)
-    # ==========================================
-
     TOTAL=$(wc -l < "$output_file")
-
-    if [ "$TOTAL" -gt 1500 ]; then
-        echo "[*] Large dataset detected ($TOTAL URLs) → limiting to 1000"
-        head -n 1000 "$output_file" > "$output_file.tmp"
-        mv "$output_file.tmp" "$output_file"
-        TOTAL=1000
-    fi
 
     # ==========================================
     # 🛡️ FALLBACK PROTECTION
