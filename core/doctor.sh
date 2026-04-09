@@ -1,26 +1,23 @@
 #!/bin/bash
 
 # ==========================================
-# 🩺 NUCLEIFUZZER DOCTOR MODE (v3.2)
+# 🩺 NUCLEIFUZZER DOCTOR MODE (v3.3 PRO+)
 # ==========================================
 
 # ==========================================
-# 🌐 SMART INTERNET CHECK (WSL SAFE)
+# 🌐 SMART INTERNET CHECK
 # ==========================================
 
 check_internet() {
 
-    # Method 1: curl
     if command -v curl &>/dev/null; then
         curl -Is https://google.com --max-time 5 &>/dev/null && return 0
     fi
 
-    # Method 2: wget
     if command -v wget &>/dev/null; then
         wget -q --spider https://google.com && return 0
     fi
 
-    # Method 3: DNS fallback
     getent hosts google.com &>/dev/null && return 0
 
     return 1
@@ -49,23 +46,17 @@ check_path() {
 
     echo "[*] Checking PATH..."
 
-    if [[ ":$PATH:" == *":$HOME/go/bin:"* ]]; then
-        echo "[OK] Go bin in PATH"
-    else
-        echo "[FAIL] Go bin missing from PATH"
-        ((ISSUES++))
-    fi
+    [[ ":$PATH:" == *":$HOME/go/bin:"* ]] \
+        && echo "[OK] Go bin in PATH" \
+        || { echo "[FAIL] Go bin missing"; ((ISSUES++)); }
 
-    if [[ ":$PATH:" == *":$HOME/.local/bin:"* ]]; then
-        echo "[OK] Local bin in PATH"
-    else
-        echo "[FAIL] ~/.local/bin missing from PATH"
-        ((ISSUES++))
-    fi
+    [[ ":$PATH:" == *":$HOME/.local/bin:"* ]] \
+        && echo "[OK] Local bin in PATH" \
+        || { echo "[FAIL] ~/.local/bin missing"; ((ISSUES++)); }
 }
 
 # ==========================================
-# 🌐 INTERNET CHECK
+# 🌐 NETWORK CHECK
 # ==========================================
 
 check_network() {
@@ -81,7 +72,7 @@ check_network() {
 }
 
 # ==========================================
-# 📁 OUTPUT DIRECTORY CHECK (AUTO-FIX)
+# 📁 OUTPUT DIRECTORY CHECK
 # ==========================================
 
 check_output_dir() {
@@ -93,16 +84,13 @@ check_output_dir() {
         mkdir -p "$OUTPUT_DIR" 2>/dev/null
     fi
 
-    if [ -w "$OUTPUT_DIR" ]; then
-        echo "[OK] Output directory writable"
-    else
-        echo "[FAIL] Output directory not writable"
-        ((ISSUES++))
-    fi
+    [ -w "$OUTPUT_DIR" ] \
+        && echo "[OK] Output directory writable" \
+        || { echo "[FAIL] Output not writable"; ((ISSUES++)); }
 }
 
 # ==========================================
-# 📦 TEMPLATE CHECK (NEW)
+# 📦 TEMPLATE CHECK
 # ==========================================
 
 check_templates() {
@@ -121,13 +109,93 @@ check_templates() {
 }
 
 # ==========================================
+# 🔌 PLUGIN SYSTEM CHECK (NEW)
+# ==========================================
+
+check_plugins() {
+
+    echo "[*] Checking plugin system..."
+
+    PLUGIN_DIR="./plugins"
+
+    if [ -d "$PLUGIN_DIR" ]; then
+        COUNT=$(ls "$PLUGIN_DIR"/*.sh 2>/dev/null | wc -l)
+
+        if [ "$COUNT" -gt 0 ]; then
+            echo "[OK] Plugins loaded ($COUNT found)"
+        else
+            echo "[WARN] Plugin directory empty"
+        fi
+    else
+        echo "[INFO] No plugins directory (optional)"
+    fi
+}
+
+# ==========================================
+# 🤖 AI PROVIDER CHECK (NEW)
+# ==========================================
+
+check_ai() {
+
+    echo "[*] Checking AI integration..."
+
+    if command -v gemini &>/dev/null && [ -n "$GEMINI_API_KEY" ]; then
+        echo "[OK] Gemini AI ready"
+    elif [ -n "$OPENAI_API_KEY" ]; then
+        echo "[OK] OpenAI API configured"
+    elif [ -n "$CLAUDE_API_KEY" ]; then
+        echo "[OK] Claude API configured"
+    else
+        echo "[INFO] No AI provider configured (optional)"
+    fi
+}
+
+# ==========================================
+# 🌐 SUBPIPE CHECK (NEW)
+# ==========================================
+
+check_subpipe() {
+
+    echo "[*] Checking SubPipe integration..."
+
+    if command -v subpipe &>/dev/null; then
+        if [ -n "$SUBPIPE_API_KEY" ]; then
+            echo "[OK] SubPipe ready"
+        else
+            echo "[WARN] SubPipe installed but API key missing"
+        fi
+    else
+        echo "[INFO] SubPipe not installed (optional)"
+    fi
+}
+
+# ==========================================
+# ⚡ PERFORMANCE CHECK (NEW)
+# ==========================================
+
+check_performance() {
+
+    echo "[*] Checking performance settings..."
+
+    RATE="${RATE_LIMIT:-50}"
+
+    if [ "$RATE" -lt 30 ]; then
+        echo "[WARN] Low rate limit → scans may be slow"
+    elif [ "$RATE" -gt 200 ]; then
+        echo "[WARN] High rate limit → risk of blocking"
+    else
+        echo "[OK] Rate limit balanced ($RATE)"
+    fi
+}
+
+# ==========================================
 # 🚀 MAIN DOCTOR FUNCTION
 # ==========================================
 
 run_doctor() {
 
     echo "======================================"
-    echo "🩺 NucleiFuzzer Doctor Mode"
+    echo "🩺 NucleiFuzzer Doctor Mode v3.3"
     echo "======================================"
 
     ISSUES=0
@@ -158,17 +226,21 @@ run_doctor() {
     echo ""
     check_templates
 
-    # --------------------------------------
-    # 🧠 SCAN READINESS (NEW)
-    # --------------------------------------
     echo ""
-    echo "[*] Scan readiness..."
+    check_plugins
 
-    if [ "$ISSUES" -eq 0 ]; then
-        echo "[OK] System ready for scanning"
-    else
-        echo "[WARN] Fix issues before scanning"
-    fi
+    echo ""
+    check_ai
+
+    echo ""
+    check_subpipe
+
+    echo ""
+    check_performance
+
+    # --------------------------------------
+    # 🚀 FINAL STATUS
+    # --------------------------------------
 
     echo ""
     echo "======================================"
@@ -176,7 +248,8 @@ run_doctor() {
     if [ "$ISSUES" -eq 0 ]; then
         echo "✅ System Healthy - Ready to Scan 🚀"
     else
-        echo "⚠️ Found $ISSUES issue(s). Run nf again to auto-fix."
+        echo "⚠️ Found $ISSUES issue(s)"
+        echo "👉 Run: nf --update"
     fi
 
     echo "======================================"
