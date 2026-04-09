@@ -1,31 +1,71 @@
 #!/bin/bash
 
 # ==========================================
-# ⚙️ GLOBAL CONFIGURATION (PRO VERSION)
+# ⚙️ GLOBAL CONFIGURATION (PRO v3.3)
 # ==========================================
 
-# Output settings
+# ------------------------------------------
+# 📁 OUTPUT SETTINGS
+# ------------------------------------------
+
 OUTPUT_DIR="${OUTPUT_DIR:-./output}"
 RATE_LIMIT="${RATE_LIMIT:-50}"
 
-# Nuclei templates path
+# ------------------------------------------
+# 📦 NUCLEI CONFIG
+# ------------------------------------------
+
 TEMPLATE_DIR="${TEMPLATE_DIR:-$HOME/nuclei-templates}"
 
-# Home directory
-HOME_DIR="$HOME"
+# ------------------------------------------
+# 🏠 SYSTEM PATHS
+# ------------------------------------------
 
-# ==========================================
+HOME_DIR="$HOME"
+BASE_DIR="${BASE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+
+# ------------------------------------------
+# 🔌 PLUGIN SYSTEM CONFIG (NEW)
+# ------------------------------------------
+
+PLUGIN_DIR="$BASE_DIR/plugins"
+
+# Enable/Disable plugins (space-separated)
+ENABLED_PLUGINS="${ENABLED_PLUGINS:-subpipe ai_filter js_analyzer}"
+
+# ------------------------------------------
 # 🌐 DNS INTEL CONFIG
-# ==========================================
+# ------------------------------------------
 
 SUBPIPE_API_KEY="${SUBPIPE_API_KEY:-}"
 
-# ==========================================
-# 🎯 SMART URL FILTERING (HIGH SIGNAL)
-# ==========================================
+# ------------------------------------------
+# 🤖 AI CONFIG (NEW)
+# ------------------------------------------
 
-# 🚫 EXCLUDED EXTENSIONS (Noise Reduction)
-# Goal: Remove static, binary, and non-attack-surface files
+# AI Providers (optional)
+OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+GEMINI_API_KEY="${GEMINI_API_KEY:-}"
+CLAUDE_API_KEY="${CLAUDE_API_KEY:-}"
+
+# AI Mode
+AI_MODE="${AI_MODE:-smart}"   # smart | aggressive | off
+
+# ------------------------------------------
+# ⚡ SCAN MODE CONFIG
+# ------------------------------------------
+
+DEFAULT_MODE="${DEFAULT_MODE:-auto}"   # auto | fast | deep
+
+FAST_RATE=200
+FAST_CONCURRENCY=80
+
+DEEP_RATE="${RATE_LIMIT}"
+DEEP_CONCURRENCY=50
+
+# ------------------------------------------
+# 🎯 SMART URL FILTERING (HIGH SIGNAL)
+# ------------------------------------------
 
 EXCLUDED_EXTENSIONS="\
 png,jpg,jpeg,gif,svg,webp,ico,\
@@ -39,27 +79,25 @@ txt,log,\
 apk,ipa,\
 swf"
 
-# ==========================================
-# 🎯 HIGH VALUE ENDPOINT KEYWORDS (FOR FUTURE FILTERING)
-# ==========================================
+# ------------------------------------------
+# 🎯 HIGH VALUE ENDPOINT KEYWORDS
+# ------------------------------------------
 
-# These are NOT exclusions — used for prioritization later
 HIGH_VALUE_KEYWORDS="\
 api,auth,login,admin,user,account,\
 token,session,redirect,callback,\
 file,upload,download,search,\
 id,query,debug,test"
 
-# ==========================================
-# 🎯 PARAMETER PATTERN (ATTACK SURFACE)
-# ==========================================
+# ------------------------------------------
+# 🎯 PARAMETER PATTERN
+# ------------------------------------------
 
-# Used to identify dynamic endpoints
 PARAM_PATTERN="=|\?|&"
 
-# ==========================================
+# ------------------------------------------
 # 🎨 COLORS
-# ==========================================
+# ------------------------------------------
 
 RED='\033[91m'
 GREEN='\033[92m'
@@ -68,9 +106,9 @@ BLUE='\033[94m'
 CYAN='\033[96m'
 RESET='\033[0m'
 
-# ==========================================
+# ------------------------------------------
 # 🌐 URL NORMALIZATION
-# ==========================================
+# ------------------------------------------
 
 normalize_url() {
     local url="$1"
@@ -82,11 +120,10 @@ normalize_url() {
     echo "$url"
 }
 
-# ==========================================
-# 🧠 SMART FILTER FUNCTIONS (FUTURE-READY)
-# ==========================================
+# ------------------------------------------
+# 🧠 SMART FILTER FUNCTIONS
+# ------------------------------------------
 
-# Extract parameterized URLs (high value)
 filter_param_urls() {
     local input="$1"
     local output="$2"
@@ -94,7 +131,6 @@ filter_param_urls() {
     grep -aE "$PARAM_PATTERN" "$input" > "$output" 2>/dev/null
 }
 
-# Extract high-value endpoints (auth/api/admin/etc)
 filter_high_value_urls() {
     local input="$1"
     local output="$2"
@@ -102,18 +138,15 @@ filter_high_value_urls() {
     grep -aEi "$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" > "$output" 2>/dev/null
 }
 
-# Combine smart filtering (optional future use)
 smart_filter_urls() {
     local input="$1"
     local output="$2"
 
     TEMP_FILE="$(mktemp)"
 
-    # Step 1: Apply filtering safely
     grep -aEi "$PARAM_PATTERN|$(echo "$HIGH_VALUE_KEYWORDS" | tr ',' '|')" "$input" \
         | sort -u > "$TEMP_FILE" 2>/dev/null
 
-    # Step 2: Fallback if empty
     if [ ! -s "$TEMP_FILE" ]; then
         echo "[WARN] Smart filter too aggressive → fallback to original URLs"
         cp "$input" "$TEMP_FILE"
@@ -123,10 +156,36 @@ smart_filter_urls() {
 }
 
 # ------------------------------------------
+# 🧠 AI FILTER WRAPPER (NEW)
+# ------------------------------------------
+
+ai_filter_urls() {
+    local input="$1"
+    local output="$2"
+
+    # If AI disabled → fallback
+    if [ "$AI_MODE" = "off" ]; then
+        cp "$input" "$output"
+        return
+    fi
+
+    # If Gemini CLI exists → use it
+    if command -v gemini &>/dev/null && [ -n "$GEMINI_API_KEY" ]; then
+        echo "[AI] Using Gemini for URL filtering..."
+
+        gemini "Analyze URLs from $input and return only high-risk endpoints (params, auth, api)" \
+            < "$input" > "$output" 2>/dev/null
+
+    else
+        # Fallback to smart filter
+        smart_filter_urls "$input" "$output"
+    fi
+}
+
+# ------------------------------------------
 # ⚡ PERFORMANCE HELPERS
 # ------------------------------------------
 
-# Limit huge URL lists (prevents slow scans)
 limit_urls() {
     local input="$1"
     local output="$2"
@@ -135,15 +194,15 @@ limit_urls() {
     head -n "$limit" "$input" > "$output"
 }
 
-# ==========================================
-# 🛠️ ENVIRONMENT FIX (WSL + GO + PIPX)
-# ==========================================
+# ------------------------------------------
+# 🛠️ ENVIRONMENT FIX (WSL + GO)
+# ------------------------------------------
 
 export PATH="$HOME/go/bin:$HOME/.local/bin:$PATH"
 
-# ==========================================
+# ------------------------------------------
 # 📁 AUTO-CREATE OUTPUT DIRECTORY
-# ==========================================
+# ------------------------------------------
 
 if [ ! -d "$OUTPUT_DIR" ]; then
     mkdir -p "$OUTPUT_DIR" 2>/dev/null
