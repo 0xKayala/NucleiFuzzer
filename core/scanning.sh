@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# ⚡ SCANNING MODULE (FINAL STABLE BUILD)
+# ⚡ SCANNING MODULE (v3.3 ELITE ENGINE)
 # ==========================================
 
 # ==========================================
@@ -34,11 +34,24 @@ run_nuclei() {
 
     LIVE_FILE="${input}.live"
     TEMP_JSON="$(mktemp)"
+    AI_INPUT="$(mktemp)"
+
+    rm -f "$LIVE_FILE" "$TEMP_JSON" "$AI_INPUT"
 
     # --------------------------------------
-    # 🧹 CLEANUP OLD FILES
+    # 🔌 PRE-SCAN PLUGINS
     # --------------------------------------
-    rm -f "$LIVE_FILE" "$TEMP_JSON"
+    if declare -f run_plugins >/dev/null; then
+        run_plugins "pre_scan"
+    fi
+
+    # --------------------------------------
+    # 🧠 AI PRE-FILTER (CRITICAL)
+    # --------------------------------------
+    if declare -f ai_filter_urls >/dev/null; then
+        ai_filter_urls "$input" "$AI_INPUT"
+        [ -s "$AI_INPUT" ] && input="$AI_INPUT"
+    fi
 
     # --------------------------------------
     # 🌐 HTTPX LIVE PROBING
@@ -74,11 +87,11 @@ run_nuclei() {
     echo "[*] Scan Mode: $MODE ($URL_COUNT URLs)"
 
     if [ "$MODE" = "FAST" ]; then
-        RATE=200
-        CONCURRENCY=80
+        RATE="$FAST_RATE"
+        CONCURRENCY="$FAST_CONCURRENCY"
     else
-        RATE="$RATE_LIMIT"
-        CONCURRENCY=50
+        RATE="$DEEP_RATE"
+        CONCURRENCY="$DEEP_CONCURRENCY"
     fi
 
     # --------------------------------------
@@ -90,11 +103,11 @@ run_nuclei() {
     fi
 
     # --------------------------------------
-    # ⚡ NUCLEI SCAN (SAFE PIPELINE)
+    # ⚡ NUCLEI SCAN (STREAMING MODE)
     # --------------------------------------
     echo -e "${GREEN}[Nuclei] Running DAST-focused scan...${RESET}"
 
-    nuclei -l "$LIVE_FILE" \
+    if ! nuclei -l "$LIVE_FILE" \
         -t "$TEMPLATE_DIR" \
         -dast \
         -severity critical,high,medium \
@@ -104,15 +117,20 @@ run_nuclei() {
         | grep -a '^{.*}' \
         | tee "$TEMP_JSON" \
         | jq -r '"[VULN] \(.info.severity) | \(.info.name) | \(.host)"'
+    then
+        echo "[ERROR] Nuclei execution failed"
+        exit 1
+    fi
 
     # --------------------------------------
-    # 🔁 FALLBACK SCAN (SMART)
+    # 🔁 FALLBACK SCAN (STRICT + CLEAN)
     # --------------------------------------
     if [ ! -s "$TEMP_JSON" ]; then
         echo "[INFO] No results → running fallback scan..."
 
         nuclei -l "$LIVE_FILE" \
-            -tags xss,sqli,ssrf,lfi,rce \
+            -t "$TEMPLATE_DIR" \
+            -dast \
             -severity medium,high \
             -rl "$RATE" \
             -jsonl -silent 2>/dev/null \
@@ -122,9 +140,18 @@ run_nuclei() {
     fi
 
     # --------------------------------------
-    # 📦 FINAL OUTPUT WRITE
+    # 📦 FINAL OUTPUT
     # --------------------------------------
     mv "$TEMP_JSON" "$output"
+
+    # --------------------------------------
+    # 🔌 POST-SCAN PLUGINS
+    # --------------------------------------
+    export SCAN_RESULTS="$output"
+
+    if declare -f run_plugins >/dev/null; then
+        run_plugins "post_scan"
+    fi
 
     # --------------------------------------
     # 📊 SUMMARY
@@ -144,5 +171,5 @@ run_nuclei() {
     # --------------------------------------
     # 🧹 CLEANUP
     # --------------------------------------
-    rm -f "$LIVE_FILE"
+    rm -f "$LIVE_FILE" "$AI_INPUT"
 }
