@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🧠 AI ANALYSIS MODULE (PRO+ INTELLIGENCE)
+# 🧠 AI ANALYSIS MODULE (v3.3 ELITE ENGINE)
 # ==========================================
 
 run_ai_analysis() {
@@ -23,6 +23,8 @@ run_ai_analysis() {
     HIGH=$(grep -c '"severity":"high"' "$json")
     MEDIUM=$(grep -c '"severity":"medium"' "$json")
 
+    TOTAL=$((CRITICAL + HIGH + MEDIUM))
+
     # --------------------------------------
     # 🧠 DETECTION FLAGS
     # --------------------------------------
@@ -34,7 +36,37 @@ run_ai_analysis() {
     HAS_RCE=$(grep -qi "rce" "$json" && echo "true" || echo "false")
 
     # --------------------------------------
-    # 📄 AI OUTPUT
+    # 🧠 RISK SCORING ENGINE (NEW)
+    # --------------------------------------
+
+    SCORE=0
+
+    ((SCORE += CRITICAL * 5))
+    ((SCORE += HIGH * 3))
+    ((SCORE += MEDIUM * 1))
+
+    if [ "$HAS_RCE" = "true" ]; then ((SCORE += 10)); fi
+    if [ "$HAS_SSRF" = "true" ]; then ((SCORE += 8)); fi
+    if [ "$HAS_SQLI" = "true" ]; then ((SCORE += 7)); fi
+    if [ "$HAS_IDOR" = "true" ]; then ((SCORE += 6)); fi
+    if [ "$HAS_XSS" = "true" ]; then ((SCORE += 4)); fi
+
+    # --------------------------------------
+    # 🧠 AI PROVIDER DETECTION (NEW)
+    # --------------------------------------
+
+    AI_PROVIDER="none"
+
+    if command -v gemini &>/dev/null && [ -n "$GEMINI_API_KEY" ]; then
+        AI_PROVIDER="gemini"
+    elif [ -n "$OPENAI_API_KEY" ]; then
+        AI_PROVIDER="openai"
+    elif [ -n "$CLAUDE_API_KEY" ]; then
+        AI_PROVIDER="claude"
+    fi
+
+    # --------------------------------------
+    # 📄 BASE OUTPUT
     # --------------------------------------
 
     {
@@ -42,90 +74,68 @@ run_ai_analysis() {
         echo "🧠 AI SECURITY INSIGHTS"
         echo "======================================"
         echo ""
-        echo "📊 Severity Overview:"
-        echo "Critical : $CRITICAL"
-        echo "High     : $HIGH"
-        echo "Medium   : $MEDIUM"
+
+        echo "📊 Overview:"
+        echo "Total Findings : $TOTAL"
+        echo "Critical       : $CRITICAL"
+        echo "High           : $HIGH"
+        echo "Medium         : $MEDIUM"
+        echo ""
+
+        echo "🧠 Risk Score: $SCORE"
         echo ""
 
         # ----------------------------------
-        # 🚨 PRIORITY DECISION
+        # 🚨 PRIORITY
         # ----------------------------------
 
-        if [ "$CRITICAL" -gt 0 ]; then
-            echo "🚨 PRIORITY: IMMEDIATE ACTION REQUIRED"
-        elif [ "$HIGH" -gt 0 ]; then
-            echo "⚠️ PRIORITY: HIGH RISK - Fix soon"
+        if [ "$SCORE" -gt 20 ]; then
+            echo "🚨 PRIORITY: CRITICAL RISK"
+        elif [ "$SCORE" -gt 10 ]; then
+            echo "⚠️ PRIORITY: HIGH RISK"
         else
-            echo "✅ PRIORITY: Moderate risk"
+            echo "✅ PRIORITY: MODERATE RISK"
         fi
 
         echo ""
 
         # ----------------------------------
-        # 🧠 VULNERABILITY INSIGHTS
+        # 🔍 VULNERABILITY INSIGHTS
         # ----------------------------------
 
         echo "🔍 Key Findings:"
 
-        if [ "$HAS_IDOR" = "true" ]; then
-            echo "- IDOR detected"
-            echo "  → Test horizontal/vertical privilege escalation"
-            echo "  → Try changing user IDs"
-        fi
-
-        if [ "$HAS_XSS" = "true" ]; then
-            echo "- XSS detected"
-            echo "  → Test payloads:"
-            echo "     <script>alert(1)</script>"
-            echo "     \"><svg/onload=alert(1)>"
-        fi
-
-        if [ "$HAS_SSRF" = "true" ]; then
-            echo "- SSRF risk"
-            echo "  → Test internal endpoints:"
-            echo "     http://127.0.0.1"
-            echo "     http://169.254.169.254"
-        fi
-
-        if [ "$HAS_SQLI" = "true" ]; then
-            echo "- SQL Injection indicators"
-            echo "  → Try:"
-            echo "     ' OR 1=1--"
-            echo "     sleep(5)"
-        fi
-
-        if [ "$HAS_RCE" = "true" ]; then
-            echo "- RCE indicators"
-            echo "  → Test command injection:"
-            echo "     ;id"
-            echo "     && whoami"
-        fi
+        [ "$HAS_RCE" = "true" ] && echo "- RCE detected → Critical exploitation possible"
+        [ "$HAS_SQLI" = "true" ] && echo "- SQL Injection → Database compromise risk"
+        [ "$HAS_SSRF" = "true" ] && echo "- SSRF → Internal service access risk"
+        [ "$HAS_IDOR" = "true" ] && echo "- IDOR → Broken access control"
+        [ "$HAS_XSS" = "true" ] && echo "- XSS → Client-side exploitation"
 
         echo ""
 
         # ----------------------------------
-        # 💡 SMART RECOMMENDATIONS
+        # 💡 ACTIONABLE STEPS
         # ----------------------------------
 
-        echo "💡 Suggested Next Steps:"
-
-        if [ "$CRITICAL" -gt 0 ]; then
-            echo "- Focus on critical endpoints first"
-        fi
-
-        if [ "$HAS_IDOR" = "true" ]; then
-            echo "- Perform authenticated testing"
-        fi
-
-        if [ "$HAS_XSS" = "true" ]; then
-            echo "- Test stored vs reflected XSS"
-        fi
-
+        echo "💡 Recommended Actions:"
+        echo "- Validate findings manually"
+        echo "- Focus on high-impact endpoints first"
+        echo "- Attempt chaining vulnerabilities"
         echo "- Run deeper scan (--deep)"
-        echo "- Perform manual validation (reduce false positives)"
 
         echo ""
+
+        # ----------------------------------
+        # 🤖 EXTERNAL AI (OPTIONAL)
+        # ----------------------------------
+
+        if [ "$AI_PROVIDER" = "gemini" ]; then
+            echo "🤖 Gemini AI Insights:"
+            gemini "Analyze this vulnerability report and suggest exploitation paths:" \
+                < "$json" 2>/dev/null | head -n 15
+            echo ""
+        fi
+
         echo "======================================"
 
     } > "$output"
