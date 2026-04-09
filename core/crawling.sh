@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🕸️ CRAWLING MODULE (PARALLEL + SMART MERGE)
+# 🕸️ CRAWLING MODULE (PARALLEL + AI + PLUGIN READY)
 # ==========================================
 
 crawl() {
@@ -14,65 +14,112 @@ crawl() {
 
     TMP_DIR=$(mktemp -d)
 
-    # ==========================================
-    # ⚡ PARALLEL CRAWLING
-    # ==========================================
+    RAW_FILE="$TMP_DIR/raw.txt"
+    CLEAN_FILE="$TMP_DIR/clean.txt"
+    FILTERED_FILE="$TMP_DIR/filtered.txt"
+    JS_FILE="$TMP_DIR/js.txt"
 
-    # Hakrawler
+    # ------------------------------------------
+    # ⚡ PARALLEL CRAWLING
+    # ------------------------------------------
+
     echo -e "${GREEN}[Hakrawler] Crawling...${RESET}"
     (echo "$target" | hakrawler -d 3 -subs -u > "$TMP_DIR/hakrawler.txt" 2>/dev/null) &
 
-    # Katana
     echo -e "${GREEN}[Katana] Deep crawling...${RESET}"
     (echo "$target" | katana -d 3 -silent -follow-redirects > "$TMP_DIR/katana.txt" 2>/dev/null) &
 
-    # Wait for both tools
     wait
 
-    # ==========================================
+    # ------------------------------------------
     # 🧩 MERGE RESULTS
-    # ==========================================
+    # ------------------------------------------
 
-    cat "$TMP_DIR"/*.txt 2>/dev/null >> "$output_file"
+    cat "$TMP_DIR"/*.txt 2>/dev/null > "$RAW_FILE"
 
-    # ==========================================
-    # 🧠 SMART FILTERING (HIGH VALUE URLS)
-    # ==========================================
+    # ------------------------------------------
+    # 🧹 CLEAN + DEDUP
+    # ------------------------------------------
 
-    echo -e "${CYAN}[*] Filtering crawl results...${RESET}"
+    grep -E '^https?://' "$RAW_FILE" \
+        | sort -u > "$CLEAN_FILE"
 
-    FILTERED_FILE="$TMP_DIR/filtered.txt"
-
-    if declare -f smart_filter_urls >/dev/null; then
-        smart_filter_urls "$output_file" "$FILTERED_FILE"
-        mv "$FILTERED_FILE" "$output_file"
+    if [ ! -s "$CLEAN_FILE" ]; then
+        echo "[WARN] No crawl results → fallback"
+        cp "$RAW_FILE" "$CLEAN_FILE"
     fi
 
-    # ==========================================
-    # 📉 PERFORMANCE CONTROL (LIMIT SIZE)
-    # ==========================================
+    # ------------------------------------------
+    # 📜 JS FILE EXTRACTION (NEW)
+    # ------------------------------------------
+
+    grep -Ei '\.js$' "$CLEAN_FILE" > "$JS_FILE" 2>/dev/null
+
+    if [ -s "$JS_FILE" ]; then
+        echo "[*] JS files detected: $(wc -l < "$JS_FILE")"
+        export JS_URLS="$JS_FILE"
+    fi
+
+    # ------------------------------------------
+    # 🧠 SMART + AI FILTERING
+    # ------------------------------------------
+
+    echo -e "${CYAN}[*] Applying intelligent filtering...${RESET}"
+
+    # Step 1: Smart filter
+    if declare -f smart_filter_urls >/dev/null; then
+        smart_filter_urls "$CLEAN_FILE" "$FILTERED_FILE"
+    else
+        cp "$CLEAN_FILE" "$FILTERED_FILE"
+    fi
+
+    # Step 2: AI filter
+    if declare -f ai_filter_urls >/dev/null; then
+        AI_FILE="$TMP_DIR/ai_filtered.txt"
+        ai_filter_urls "$FILTERED_FILE" "$AI_FILE"
+
+        if [ -s "$AI_FILE" ]; then
+            mv "$AI_FILE" "$FILTERED_FILE"
+        fi
+    fi
+
+    # Step 3: Fallback
+    if [ ! -s "$FILTERED_FILE" ]; then
+        echo "[WARN] Filtering removed too much → fallback"
+        cp "$CLEAN_FILE" "$FILTERED_FILE"
+    fi
+
+    # ------------------------------------------
+    # 🔌 POST-CRAWL PLUGINS (NEW)
+    # ------------------------------------------
+
+    export RAW_URLS="$FILTERED_FILE"
+
+    if declare -f run_plugins >/dev/null; then
+        run_plugins "post_crawl"
+    fi
+
+    # ------------------------------------------
+    # 📦 FINAL OUTPUT
+    # ------------------------------------------
+
+    cat "$FILTERED_FILE" >> "$output_file"
 
     TOTAL=$(wc -l < "$output_file")
 
-    if [ "$TOTAL" -gt 2000 ]; then
-        echo "[*] Large crawl dataset ($TOTAL URLs) → limiting to 1200"
-        head -n 1200 "$output_file" > "$output_file.tmp"
-        mv "$output_file.tmp" "$output_file"
-        TOTAL=1200
-    fi
-
-    # ==========================================
+    # ------------------------------------------
     # 🛡️ FALLBACK
-    # ==========================================
+    # ------------------------------------------
 
     if [ ! -s "$output_file" ]; then
         echo "[WARN] No URLs found, adding root domain"
         echo "$target" >> "$output_file"
+        TOTAL=1
     fi
 
-    # ==========================================
+    # ------------------------------------------
     # 🧹 CLEANUP
-    # ==========================================
+    # ------------------------------------------
 
     rm -rf "$TMP_DIR"
 
