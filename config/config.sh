@@ -15,6 +15,12 @@ TEMPLATE_DIR="${TEMPLATE_DIR:-$HOME/nuclei-templates}"
 HOME_DIR="$HOME"
 
 # ==========================================
+# 🌐 DNS INTEL CONFIG
+# ==========================================
+
+SUBPIPE_API_KEY="${SUBPIPE_API_KEY:-}"
+
+# ==========================================
 # 🎯 SMART URL FILTERING (HIGH SIGNAL)
 # ==========================================
 
