@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🔥 NucleiFuzzer v3.3 - AI Offensive Engine
+# 🔥 NUCLEIFUZZER v3.3 - AI OFFENSIVE ENGINE
 # ==========================================
 
 # =========================
@@ -14,14 +14,21 @@ CYAN='\033[96m'
 RESET='\033[0m'
 
 # =========================
-# 🎯 BANNER
+# 🎯 ASCII BANNER (UPGRADED)
 # =========================
 show_banner() {
 echo -e "${RED}"
 cat << "EOF"
-   ⚡ NucleiFuzzer v3.3 (AI + Plugins + Smart Recon)
 
-      Burp Suite CLI + AI Intelligence Engine
+███╗   ██╗██╗   ██╗ ██████╗██╗     ███████╗██╗███████╗██╗   ██╗███████╗███████╗███████╗██████╗ 
+████╗  ██║██║   ██║██╔════╝██║     ██╔════╝██║██╔════╝██║   ██║╚══███╔╝╚══███╔╝██╔════╝██╔══██╗
+██╔██╗ ██║██║   ██║██║     ██║     █████╗  ██║█████╗  ██║   ██║  ███╔╝   ███╔╝ █████╗  ██████╔╝
+██║╚██╗██║██║   ██║██║     ██║     ██╔══╝  ██║██╔══╝  ██║   ██║ ███╔╝   ███╔╝  ██╔══╝  ██╔══██╗
+██║ ╚████║╚██████╔╝╚██████╗███████╗███████╗██║██║     ╚██████╔╝███████╗███████╗███████╗██║  ██║
+╚═╝  ╚═══╝ ╚═════╝  ╚═════╝╚══════╝╚══════╝╚═╝╚═╝      ╚═════╝ ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝
+                                                                                               
+                                               ⚡ NucleiFuzzer v3.3 (AI + Plugins + Smart Recon)
+                                                  Burp Suite CLI + AI Intelligence Engine
 
 EOF
 echo -e "${RESET}"
@@ -51,7 +58,6 @@ exit 0
 # =========================
 SCRIPT_PATH="$(readlink -f "$0")"
 BASE_DIR="$(dirname "$SCRIPT_PATH")"
-
 [[ "$BASE_DIR" == "/usr/bin" ]] && BASE_DIR="/opt/nucleifuzzer"
 
 # =========================
@@ -68,7 +74,7 @@ source "$BASE_DIR/core/reporting.sh"
 source "$BASE_DIR/core/ai.sh"
 
 # =========================
-# 🔌 PLUGIN SYSTEM (NEW)
+# 🔌 PLUGIN SYSTEM (IMPROVED)
 # =========================
 load_plugins() {
     PLUGIN_DIR="$BASE_DIR/plugins"
@@ -81,9 +87,9 @@ load_plugins() {
 
 run_plugins() {
     local hook="$1"
-    if declare -F plugin_"$hook" >/dev/null; then
-        plugin_"$hook"
-    fi
+    for fn in $(declare -F | awk '{print $3}' | grep "^plugin_${hook}"); do
+        $fn
+    done
 }
 
 load_plugins
@@ -91,7 +97,6 @@ load_plugins
 # =========================
 # ⚙️ FLAGS
 # =========================
-VERBOSE=false
 AI_MODE=false
 FAST_MODE=false
 DEEP_MODE=false
@@ -160,19 +165,24 @@ else
 fi
 
 # =========================
-# 🔌 PLUGIN HOOK
+# 🧠 AI URL FILTER (UPGRADED)
 # =========================
-export RAW_FILE
-run_plugins "post_recon"
+if [ "$AI_MODE" = true ]; then
+    echo "[*] AI-powered URL prioritization..."
 
-# =========================
-# 🧠 AI RECON FILTER (NEW)
-# =========================
-if [ "$AI_MODE" = true ] && command -v gemini &>/dev/null; then
-    echo "[*] AI filtering URLs..."
+    if command -v gemini &>/dev/null; then
+        gemini "
+Analyze these URLs and return ONLY high-value security endpoints:
+- APIs
+- auth/login/admin
+- parameters
+- sensitive paths
+Remove noise like static files.
 
-    gemini "Filter high-value security URLs only" < "$RAW_FILE" \
-        | grep -E '^https?://' > "$RAW_FILE.ai"
+Return only URLs.
+" < "$RAW_FILE" \
+        | grep -aE '^https?://' > "$RAW_FILE.ai"
+    fi
 
     [ -s "$RAW_FILE.ai" ] && mv "$RAW_FILE.ai" "$RAW_FILE"
 fi
@@ -183,7 +193,7 @@ fi
 validate_urls "$RAW_FILE" "$VALIDATED_FILE"
 
 # =========================
-# 🌐 SUBPIPE (NEW)
+# 🌐 SUBPIPE (DNS INTEL)
 # =========================
 if command -v subpipe &>/dev/null && [ -n "$SUBPIPE_API_KEY" ]; then
     echo "[*] Running SubPipe DNS analysis..."
@@ -207,7 +217,7 @@ generate_html_report "$JSON_FILE" "$HTML_FILE"
 [ "$AI_MODE" = true ] && run_ai_analysis "$JSON_FILE" "$AI_FILE"
 
 # =========================
-# 🔌 POST-SCAN PLUGIN
+# 🔌 POST-SCAN PLUGINS
 # =========================
 export JSON_FILE
 run_plugins "post_scan"
