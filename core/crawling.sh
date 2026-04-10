@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🕸️ CRAWLING MODULE (PARALLEL + AI + PLUGIN READY)
+# 🕸️ CRAWLING MODULE (STABLE + AI + PLUGIN READY)
 # ==========================================
 
 crawl() {
@@ -32,16 +32,21 @@ crawl() {
     wait
 
     # ------------------------------------------
-    # 🧩 MERGE RESULTS
+    # 🧩 SAFE MERGE (FIXED)
     # ------------------------------------------
 
-    cat "$TMP_DIR"/*.txt 2>/dev/null > "$RAW_FILE"
+    touch "$RAW_FILE"
+
+    for f in "$TMP_DIR"/*.txt; do
+        [ -f "$f" ] && strings "$f" >> "$RAW_FILE"
+    done
 
     # ------------------------------------------
-    # 🧹 CLEAN + DEDUP
+    # 🧹 CLEAN + NORMALIZE
     # ------------------------------------------
 
-    grep -E '^https?://' "$RAW_FILE" \
+    grep -aE 'https?://' "$RAW_FILE" \
+        | sed 's/[]["<> ]//g' \
         | sort -u > "$CLEAN_FILE"
 
     if [ ! -s "$CLEAN_FILE" ]; then
@@ -50,13 +55,14 @@ crawl() {
     fi
 
     # ------------------------------------------
-    # 📜 JS FILE EXTRACTION (NEW)
+    # 📜 JS FILE EXTRACTION (AI READY)
     # ------------------------------------------
 
-    grep -Ei '\.js$' "$CLEAN_FILE" > "$JS_FILE" 2>/dev/null
+    grep -aEi '\.js(\?|$)' "$CLEAN_FILE" > "$JS_FILE" 2>/dev/null
 
     if [ -s "$JS_FILE" ]; then
-        echo "[*] JS files detected: $(wc -l < "$JS_FILE")"
+        COUNT=$(wc -l < "$JS_FILE")
+        echo "[*] JS files detected: $COUNT"
         export JS_URLS="$JS_FILE"
     fi
 
@@ -66,31 +72,28 @@ crawl() {
 
     echo -e "${CYAN}[*] Applying intelligent filtering...${RESET}"
 
-    # Step 1: Smart filter
     if declare -f smart_filter_urls >/dev/null; then
         smart_filter_urls "$CLEAN_FILE" "$FILTERED_FILE"
     else
         cp "$CLEAN_FILE" "$FILTERED_FILE"
     fi
 
-    # Step 2: AI filter
+    # AI filtering
     if declare -f ai_filter_urls >/dev/null; then
         AI_FILE="$TMP_DIR/ai_filtered.txt"
         ai_filter_urls "$FILTERED_FILE" "$AI_FILE"
 
-        if [ -s "$AI_FILE" ]; then
-            mv "$AI_FILE" "$FILTERED_FILE"
-        fi
+        [ -s "$AI_FILE" ] && mv "$AI_FILE" "$FILTERED_FILE"
     fi
 
-    # Step 3: Fallback
+    # Fallback protection
     if [ ! -s "$FILTERED_FILE" ]; then
-        echo "[WARN] Filtering removed too much → fallback"
+        echo "[WARN] Filtering too aggressive → fallback"
         cp "$CLEAN_FILE" "$FILTERED_FILE"
     fi
 
     # ------------------------------------------
-    # 🔌 POST-CRAWL PLUGINS (NEW)
+    # 🔌 POST-CRAWL PLUGINS
     # ------------------------------------------
 
     export RAW_URLS="$FILTERED_FILE"
@@ -100,7 +103,7 @@ crawl() {
     fi
 
     # ------------------------------------------
-    # 📦 FINAL OUTPUT
+    # 📦 FINAL OUTPUT (FIXED)
     # ------------------------------------------
 
     cat "$FILTERED_FILE" >> "$output_file"
