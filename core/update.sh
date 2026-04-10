@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# ⬆️ NUCLEIFUZZER UPDATE ENGINE (SMART + FAST)
+# ⬆️ NUCLEIFUZZER UPDATE ENGINE (v3.3 PRO)
 # ==========================================
 
 # ==========================================
@@ -10,17 +10,15 @@
 
 setup_update_env() {
 
-    # Fix PATH (critical for WSL + Go)
     export PATH="/usr/local/go/bin:$HOME/go/bin:$HOME/.local/bin:$PATH"
 
-    # Go stability fixes
     export GOPROXY=https://proxy.golang.org,direct
     export GOSUMDB=off
     export GOTOOLCHAIN=local
 }
 
 # ==========================================
-# 🌐 INTERNET CHECK (NEW)
+# 🌐 INTERNET CHECK
 # ==========================================
 
 check_network_update() {
@@ -33,55 +31,39 @@ check_network_update() {
 }
 
 # ==========================================
-# 🔍 TOOL VERSION FETCHER
-# ==========================================
-
-get_version() {
-    local tool="$1"
-
-    case "$tool" in
-        nuclei|httpx|katana)
-            $tool -version 2>/dev/null | head -n1
-            ;;
-        waybackurls|gauplus|hakrawler)
-            echo "installed"
-            ;;
-        *)
-            echo "unknown"
-            ;;
-    esac
-}
-
-# ==========================================
-# 🔄 SMART GO TOOL UPDATE (FIXED)
+# 🔄 SMART INSTALL / UPDATE ENGINE
 # ==========================================
 
 update_go_tool() {
     local tool_name="$1"
     local install_cmd="$2"
 
-    # Skip if already installed (FAST MODE)
+    echo "[*] Checking $tool_name..."
+
     if command -v "$tool_name" &>/dev/null; then
-        echo "[OK] $tool_name already installed → skipping"
-        return
+        echo "[INFO] Updating $tool_name..."
+    else
+        echo "[INFO] Installing $tool_name..."
     fi
 
-    echo "[*] Installing $tool_name..."
-
     if eval "$install_cmd" &>/dev/null; then
-        echo "[OK] $tool_name installed"
+        echo "[OK] $tool_name ready"
     else
-        echo "[WARN] Failed to install $tool_name"
+        echo "[WARN] Failed → retrying..."
+        sleep 2
+        eval "$install_cmd" &>/dev/null \
+            && echo "[OK] $tool_name installed (retry success)" \
+            || echo "[FAIL] $tool_name installation failed"
     fi
 }
 
 # ==========================================
-# 📦 UPDATE GO-BASED TOOLS
+# 📦 GO TOOLS (UPDATED)
 # ==========================================
 
 update_go_tools() {
 
-    echo "[*] Checking Go-based tools..."
+    echo "[*] Updating Go-based tools..."
 
     update_go_tool "nuclei" "go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
     update_go_tool "httpx" "go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
@@ -89,34 +71,88 @@ update_go_tools() {
     update_go_tool "waybackurls" "go install github.com/tomnomnom/waybackurls@latest"
     update_go_tool "gauplus" "go install github.com/bp0lr/gauplus@latest"
     update_go_tool "hakrawler" "go install github.com/hakluke/hakrawler@latest"
+
+    # 🔥 NEW: SubPipe
+    update_go_tool "subpipe" "go install github.com/subpipe/subpipe@latest"
 }
 
 # ==========================================
-# 🌐 UPDATE EXTERNAL RESOURCES
+# 🌐 EXTERNAL RESOURCES
 # ==========================================
 
 update_resources() {
 
     echo "[*] Checking external resources..."
 
-    # Nuclei Templates
+    # Templates
     if [ -d "$HOME/nuclei-templates/.git" ]; then
-        echo "[OK] Templates already present"
+        echo "[*] Updating templates..."
+        cd "$HOME/nuclei-templates" && git pull --quiet && cd - &>/dev/null
+        echo "[OK] Templates updated"
     else
-        echo "[*] Cloning nuclei templates..."
+        echo "[*] Cloning templates..."
         git clone https://github.com/projectdiscovery/nuclei-templates "$HOME/nuclei-templates" &>/dev/null \
-            && echo "[OK] Templates installed" \
-            || echo "[WARN] Failed to clone templates"
+            && echo "[OK] Templates installed"
     fi
 
     # ParamSpider
     if [ -d "$HOME/ParamSpider/.git" ]; then
-        echo "[OK] ParamSpider already present"
+        echo "[*] Updating ParamSpider..."
+        cd "$HOME/ParamSpider" && git pull --quiet && cd - &>/dev/null
+        echo "[OK] ParamSpider updated"
     else
         echo "[*] Cloning ParamSpider..."
         git clone https://github.com/0xKayala/ParamSpider "$HOME/ParamSpider" &>/dev/null \
-            && echo "[OK] ParamSpider installed" \
-            || echo "[WARN] Failed to clone ParamSpider"
+            && echo "[OK] ParamSpider installed"
+    fi
+}
+
+# ==========================================
+# 🤖 AI SETUP (NEW)
+# ==========================================
+
+setup_ai_tools() {
+
+    echo "[*] Checking AI tools..."
+
+    if command -v npm &>/dev/null; then
+        if ! command -v gemini &>/dev/null; then
+            echo "[*] Installing Gemini CLI..."
+            npm install -g @google/gemini-cli &>/dev/null \
+                && echo "[OK] Gemini installed"
+        else
+            echo "[OK] Gemini already installed"
+        fi
+    else
+        echo "[WARN] npm not found → AI features limited"
+    fi
+}
+
+# ==========================================
+# 🔌 PLUGIN SYSTEM (NEW)
+# ==========================================
+
+setup_plugins() {
+
+    echo "[*] Setting up plugins..."
+
+    PLUGIN_DIR="./plugins"
+
+    if [ ! -d "$PLUGIN_DIR" ]; then
+        mkdir -p "$PLUGIN_DIR"
+        echo "[OK] Plugin directory created"
+    fi
+
+    # Example plugin
+    if [ ! -f "$PLUGIN_DIR/example.sh" ]; then
+        cat <<EOF > "$PLUGIN_DIR/example.sh"
+#!/bin/bash
+plugin_post_scan() {
+    echo "[PLUGIN] Example plugin executed"
+}
+EOF
+        chmod +x "$PLUGIN_DIR/example.sh"
+        echo "[OK] Example plugin added"
     fi
 }
 
@@ -125,7 +161,6 @@ update_resources() {
 # ==========================================
 
 cleanup_update() {
-
     echo "[*] Cleaning Go cache..."
     go clean -modcache &>/dev/null
 }
@@ -137,35 +172,20 @@ cleanup_update() {
 run_update() {
 
     echo "======================================"
-    echo "⬆️ NucleiFuzzer Smart Update Engine"
+    echo "⬆️ NucleiFuzzer Smart Update Engine v3.3"
     echo "======================================"
 
     setup_update_env
 
-    # --------------------------------------
-    # 🌐 NETWORK CHECK
-    # --------------------------------------
     if ! check_network_update; then
-        echo "[WARN] No internet connection → skipping updates"
-        echo "======================================"
-        echo "⚠️ Update skipped (offline mode)"
-        echo "======================================"
+        echo "[WARN] Offline → skipping updates"
         return
     fi
 
-    # --------------------------------------
-    # 📦 TOOLS
-    # --------------------------------------
     update_go_tools
-
-    # --------------------------------------
-    # 📂 RESOURCES
-    # --------------------------------------
     update_resources
-
-    # --------------------------------------
-    # 🧹 CLEANUP
-    # --------------------------------------
+    setup_ai_tools
+    setup_plugins
     cleanup_update
 
     echo "======================================"
