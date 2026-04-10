@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🔍 RECON MODULE (PARALLEL + AI + PLUGIN READY)
+# 🔍 RECON MODULE (STABLE + AI + PLUGIN READY)
 # ==========================================
 
 recon() {
@@ -14,7 +14,7 @@ recon() {
 
     TMP_DIR=$(mktemp -d)
 
-    RAW_FILE="$TMP_DIR/raw.txt"
+    RAW_FILE_TMP="$TMP_DIR/raw.txt"
     CLEAN_FILE="$TMP_DIR/clean.txt"
     FILTERED_FILE="$TMP_DIR/filtered.txt"
 
@@ -36,8 +36,6 @@ recon() {
             --exclude "$EXCLUDED_EXTENSIONS" \
             --quiet \
             -o "$TMP_DIR/paramspider.txt" 2>/dev/null &
-    else
-        echo "[WARN] ParamSpider not found"
     fi
 
     echo -e "${GREEN}[Waybackurls] Fetching URLs...${RESET}"
@@ -49,21 +47,23 @@ recon() {
     wait
 
     # ==========================================
-    # 🧩 MERGE RESULTS
+    # 🧩 SAFE MERGE (FIXED)
     # ==========================================
 
-    cat "$TMP_DIR"/*.txt 2>/dev/null > "$RAW_FILE"
+    for f in "$TMP_DIR"/*.txt; do
+        [ -f "$f" ] && strings "$f" >> "$RAW_FILE_TMP"
+    done
 
     # ==========================================
-    # 🧹 CLEAN + NORMALIZE
+    # 🧹 CLEAN + NORMALIZE (SAFE)
     # ==========================================
 
-    grep -E '^https?://' "$RAW_FILE" \
+    grep -aE '^https?://' "$RAW_FILE_TMP" \
         | sort -u > "$CLEAN_FILE"
 
     if [ ! -s "$CLEAN_FILE" ]; then
         echo "[WARN] No valid URLs found → fallback to raw"
-        cp "$RAW_FILE" "$CLEAN_FILE"
+        cp "$RAW_FILE_TMP" "$CLEAN_FILE"
     fi
 
     # ==========================================
@@ -72,26 +72,23 @@ recon() {
 
     echo -e "${CYAN}[*] Applying intelligent filtering...${RESET}"
 
-    # Step 1: Smart filter (baseline)
     if declare -f smart_filter_urls >/dev/null; then
         smart_filter_urls "$CLEAN_FILE" "$FILTERED_FILE"
     else
         cp "$CLEAN_FILE" "$FILTERED_FILE"
     fi
 
-    # Step 2: AI filter (if enabled)
+    # AI filtering (optional)
     if declare -f ai_filter_urls >/dev/null; then
         AI_FILE="$TMP_DIR/ai_filtered.txt"
         ai_filter_urls "$FILTERED_FILE" "$AI_FILE"
 
-        if [ -s "$AI_FILE" ]; then
-            mv "$AI_FILE" "$FILTERED_FILE"
-        fi
+        [ -s "$AI_FILE" ] && mv "$AI_FILE" "$FILTERED_FILE"
     fi
 
-    # Step 3: Fallback protection
+    # Fallback
     if [ ! -s "$FILTERED_FILE" ]; then
-        echo "[WARN] Filtering removed too much → fallback to clean URLs"
+        echo "[WARN] Filtering too aggressive → fallback"
         cp "$CLEAN_FILE" "$FILTERED_FILE"
     fi
 
@@ -106,15 +103,15 @@ recon() {
     fi
 
     # ==========================================
-    # 📦 FINAL OUTPUT
+    # 📦 FINAL OUTPUT (FIXED)
     # ==========================================
 
-    mv "$FILTERED_FILE" "$output_file"
+    cat "$FILTERED_FILE" >> "$output_file"
 
     TOTAL=$(wc -l < "$output_file")
 
     # ==========================================
-    # 🛡️ FALLBACK PROTECTION
+    # 🛡️ FALLBACK
     # ==========================================
 
     if [ ! -s "$output_file" ]; then
