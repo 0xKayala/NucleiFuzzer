@@ -246,6 +246,12 @@ class NucleiFuzzer:
         cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l {self.validated_file} -o {self.live_file}"
         self.run_command(cmd, silent=True)
 
+        # Safety Fallback: If httpx fails or drops all URLs, fallback to validated URLs
+        if not self.live_file.exists() or self.live_file.stat().st_size == 0:
+            print(f"{Fore.YELLOW}[WARN] httpx found no live hosts (Common in Cloud Shell environments).{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}[*] Bypassing httpx filter and passing all URLs directly to Nuclei...{Style.RESET_ALL}")
+            shutil.copy(self.validated_file, self.live_file)
+
     # ==========================================
     # ⚡ PHASE 5: NUCLEI SCANNING
     # ==========================================
