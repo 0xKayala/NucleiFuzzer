@@ -61,6 +61,9 @@ class NucleiFuzzer:
 
         # Scanning speed (Rate Limit)
         self.rate_limit = 200 if self.fast_mode else 50
+        
+        # Excluded extensions (Restored from v2.5.1 for cleaner recon)
+        self.excluded_exts = "png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt"
 
     # --------------------------------------------------------------------------
     # 🎨 FUNCTION: show_banner
@@ -187,12 +190,18 @@ class NucleiFuzzer:
     # --------------------------------------------------------------------------
     def recon(self, target):
         print(f"\n{Fore.BLUE}[*] PHASE 1: Starting Parallel Recon & URL Collection for {target}...{Style.RESET_ALL}")
+        
+        # TARGET NORMALIZATION: Some tools need a strict URL (http://), others need a domain.
+        target_url = target if target.startswith("http") else f"http://{target}"
+        target_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
+
+        # RE-ADDED: --level high for ParamSpider and explicit exclusions for cleaner output.
         commands = {
-            "ParamSpider": f"python3 ~/ParamSpider/paramspider.py -d {target} --quiet -o {self.output_dir}/param.txt",
-            "Waybackurls": f"echo {target} | waybackurls > {self.output_dir}/wayback.txt",
-            "Gauplus": f"echo {target} | gauplus -subs > {self.output_dir}/gau.txt",
-            "Hakrawler": f"echo {target} | hakrawler -d 3 -subs -u > {self.output_dir}/hakrawler.txt",
-            "Katana": f"echo {target} | katana -d 3 -silent > {self.output_dir}/katana.txt"
+            "ParamSpider": f"python3 ~/ParamSpider/paramspider.py -d {target_domain} --exclude {self.excluded_exts} --level high --quiet -o {self.output_dir}/param.txt",
+            "Waybackurls": f"echo {target_domain} | waybackurls > {self.output_dir}/wayback.txt",
+            "Gauplus": f"echo {target_domain} | gauplus -subs -b {self.excluded_exts} > {self.output_dir}/gau.txt",
+            "Hakrawler": f"echo {target_url} | hakrawler -d 3 -subs -u > {self.output_dir}/hakrawler.txt",
+            "Katana": f"echo {target_url} | katana -d 3 -silent > {self.output_dir}/katana.txt"
         }
 
         # Multi-threading: Runs all 5 tools above simultaneously
@@ -250,8 +259,16 @@ class NucleiFuzzer:
     def nuclei_scan(self):
         print(f"\n{Fore.BLUE}[*] PHASE 5: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
         templates = os.path.expanduser("~/nuclei-templates")
-        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -severity critical,high,medium,low -rl {self.rate_limit} -jsonl -silent -o {self.json_file}"
-        self.run_command(cmd)
+        
+        # RESTORED: Removed severity filters so ALL dast templates execute (just like v2.5.1).
+        # RESTORED: Switched -jsonl to -je (JSON Export) to restore standard colorful terminal output!
+        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -je {self.json_file}"
+        
+        # We don't use run_command here because we want the user to see the live Nuclei output stream!
+        try:
+            subprocess.run(cmd, shell=True, check=True)
+        except subprocess.CalledProcessError:
+            print(f"{Fore.RED}[WARN] Nuclei encountered an error during execution.{Style.RESET_ALL}")
 
     # --------------------------------------------------------------------------
     # 📊 FUNCTION: generate_html_report
@@ -262,7 +279,7 @@ class NucleiFuzzer:
             return
         print(f"\n{Fore.CYAN}[*] Generating HTML Report...{Style.RESET_ALL}")
         findings = []
-        counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+        counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
         
         with open(self.json_file, 'r') as f:
             for line in f:
@@ -270,13 +287,14 @@ class NucleiFuzzer:
                     try:
                         d = json.loads(line)
                         findings.append(d)
-                        s = d.get('info', {}).get('severity', 'low').lower()
+                        s = d.get('info', {}).get('severity', 'info').lower()
                         if s in counts: counts[s] += 1
+                        elif s == 'unknown': counts['info'] += 1 # Group unknown with info
                     except: pass
         
         # Sort findings by severity (Critical first)
-        sev_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
-        findings.sort(key=lambda x: sev_order.get(x.get('info', {}).get('severity', 'low').lower(), 5))
+        sev_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4, "unknown": 5}
+        findings.sort(key=lambda x: sev_order.get(x.get('info', {}).get('severity', 'info').lower(), 6))
 
         # HTML Styling and Template
         html_tpl = f"""<!DOCTYPE html><html><head><title>NucleiFuzzer Results</title>
@@ -288,6 +306,7 @@ class NucleiFuzzer:
             .high {{ border-color: #ff8800; color: #ff8800; }}
             .medium {{ border-color: #ffcc00; color: #ffcc00; }}
             .low {{ border-color: #00ccff; color: #00ccff; }}
+            .info {{ border-color: #aaaaaa; color: #aaaaaa; }}
             table {{ width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }}
             th, td {{ padding: 12px; border-bottom: 1px solid #333; text-align: left; }}
             th {{ background: #2d2d2d; color: #00ffcc; }}
@@ -299,11 +318,12 @@ class NucleiFuzzer:
             <div class="box high"><h3>High</h3><h2>{counts['high']}</h2></div>
             <div class="box medium"><h3>Medium</h3><h2>{counts['medium']}</h2></div>
             <div class="box low"><h3>Low</h3><h2>{counts['low']}</h2></div>
+            <div class="box info"><h3>Info</h3><h2>{counts['info']}</h2></div>
         </div>
         <table><tr><th>Severity</th><th>Vulnerability</th><th>Target URL</th></tr>"""
         
         for f in findings:
-            s = f.get('info', {}).get('severity', 'low').lower()
+            s = f.get('info', {}).get('severity', 'info').lower()
             n = html.escape(f.get('info', {}).get('name', 'Unknown'))
             u = html.escape(f.get('matched-at', ''))
             html_tpl += f"<tr><td class='{s}'><b>{s.upper()}</b></td><td>{n}</td><td><a href='{u}' target='_blank'>{u}</a></td></tr>"
@@ -387,7 +407,7 @@ class NucleiFuzzer:
         targets = [self.domain] if self.domain else []
         if self.filename:
             with open(self.filename, 'r') as f: targets.extend([l.strip() for l in f if l.strip()])
-        if not targets: sys.exit(f"{Fore.RED}[!] No target provided.{Style.RESET_ALL}")
+        if not targets: sys.exit(f"{Fore.RED}[!] No target provided. Use -h for help.{Style.RESET_ALL}")
 
         # Loop through every domain provided
         for t in targets:
@@ -402,10 +422,10 @@ class NucleiFuzzer:
             
         print(f"\n{Fore.GREEN}======================================")
         print(f"✅ Pipeline Completed Successfully!")
-        print(f"📁 JSON Results  : {self.json_file}")
-        print(f"🌐 HTML Report   : {self.html_file}")
+        print(f"📁 JSON Results : {self.json_file}")
+        print(f"🌐 HTML Report  : {self.html_file}")
         if self.validate_mode: print(f"🛡️  Proofs Dir   : {self.proofs_dir}")
-        if self.ai_mode: print(f"🧠 AI Insights   : {self.ai_file}")
+        if self.ai_mode:       print(f"🧠 AI Insights   : {self.ai_file}")
         print(f"======================================{Style.RESET_ALL}")
 
 # ==============================================================================
