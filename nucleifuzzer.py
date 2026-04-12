@@ -22,10 +22,6 @@ init(autoreset=True)
 # ==============================================================================
 class NucleiFuzzer:
     def __init__(self, args):
-        """
-        INITIALIZATION: Sets up the base parameters.
-        Output file definitions are now handled dynamically per-target!
-        """
         self.domain = args.domain
         self.filename = args.file
         self.ai_mode = args.ai
@@ -35,7 +31,6 @@ class NucleiFuzzer:
         self.doctor_mode = args.doctor
         self.update_mode = args.update
         
-        # Base output directory
         self.base_dir = Path.cwd()
         self.base_output_dir = self.base_dir / "output"
         
@@ -43,14 +38,11 @@ class NucleiFuzzer:
         self.excluded_exts = "png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt"
 
     # --------------------------------------------------------------------------
-    # 📁 NEW FUNCTION: set_target_workspace
-    # Creates an isolated, dedicated folder for each specific domain.
+    # 📁 FUNCTION: set_target_workspace
     # --------------------------------------------------------------------------
     def set_target_workspace(self, target):
-        # Sanitize the target name (e.g. "http://example.com" -> "example.com")
         safe_target = target.replace("http://", "").replace("https://", "").split("/")[0]
         
-        # Create dedicated folders for this specific target
         self.output_dir = self.base_output_dir / safe_target
         self.proofs_dir = self.output_dir / "proofs"
         
@@ -58,7 +50,6 @@ class NucleiFuzzer:
             self.output_dir.mkdir(parents=True, exist_ok=True)
             self.proofs_dir.mkdir(parents=True, exist_ok=True)
             
-        # Define standard file names localized to this target's folder
         self.raw_file = self.output_dir / "raw.txt"
         self.validated_file = self.output_dir / "validated.txt"
         self.live_file = self.output_dir / "live.txt"
@@ -231,13 +222,19 @@ class NucleiFuzzer:
     # 📡 FUNCTION: probe_live (PHASE 4)
     # --------------------------------------------------------------------------
     def probe_live(self):
-        print(f"\n{Fore.BLUE}[*] PHASE 4: Probing live hosts with httpx...{Style.RESET_ALL}")
-        cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l {self.validated_file} -o {self.live_file}"
+        print(f"\n{Fore.BLUE}[*] PHASE 4: Probing live hosts with httpx (WAF Evasion Enabled)...{Style.RESET_ALL}")
+        
+        # UPGRADED: Added -random-agent, -timeout, -retries, and synced -rl to prevent WAF 429 blocks
+        cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -random-agent -timeout 10 -retries 2 -rl {self.rate_limit} -l {self.validated_file} -o {self.live_file}"
         self.run_command(cmd, silent=True)
         
+        # FIXED: If httpx still finds nothing, we safely abort instead of dumping raw URLs into Nuclei
         if not self.live_file.exists() or self.live_file.stat().st_size == 0:
-            print(f"{Fore.YELLOW}[WARN] No live hosts found. Bypassing httpx filter.{Style.RESET_ALL}")
-            shutil.copy(self.validated_file, self.live_file)
+            print(f"{Fore.YELLOW}[WARN] httpx found 0 live hosts. The target may be down or aggressively blocking requests (WAF).{Style.RESET_ALL}")
+            print(f"{Fore.RED}[!] Aborting Nuclei scan for this target to protect your IP from being banned.{Style.RESET_ALL}")
+            return False
+            
+        return True
 
     # --------------------------------------------------------------------------
     # ⚡ FUNCTION: nuclei_scan (PHASE 5)
@@ -246,19 +243,14 @@ class NucleiFuzzer:
         print(f"\n{Fore.BLUE}[*] PHASE 5: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
         templates = os.path.expanduser("~/nuclei-templates")
         
-        # Added '-color' to force Nuclei to keep its pretty ANSI colors even when Python intercepts it
         cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -je {self.json_file} -color"
         
         try:
-            # Intercept the Nuclei output stream in real-time
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             
             for line in process.stdout:
-                # 🚫 SILENCE THE NOISE: Filter out the annoying 'unresponsive' and 'Skipped' logs
                 if "Skipped" in line and "unresponsive" in line:
                     continue
-                
-                # Print everything else (Banner, Actual Findings, and valid info) directly to the screen
                 print(line, end="")
                 
             process.wait()
@@ -281,10 +273,12 @@ class NucleiFuzzer:
                 if line.strip():
                     try:
                         d = json.loads(line)
-                        findings.append(d)
-                        s = d.get('info', {}).get('severity', 'info').lower()
-                        if s in counts: counts[s] += 1
-                        elif s == 'unknown': counts['info'] += 1 
+                        # FIXED: Strict type check to prevent 'AttributeError: list object has no attribute get'
+                        if isinstance(d, dict):
+                            findings.append(d)
+                            s = d.get('info', {}).get('severity', 'info').lower()
+                            if s in counts: counts[s] += 1
+                            elif s == 'unknown': counts['info'] += 1 
                     except: pass
         
         sev_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4, "unknown": 5}
@@ -393,7 +387,6 @@ class NucleiFuzzer:
 
     # --------------------------------------------------------------------------
     # 🚀 FUNCTION: run
-    # THE MASTER ORCHESTRATOR
     # --------------------------------------------------------------------------
     def run(self):
         self.show_banner()
@@ -405,22 +398,24 @@ class NucleiFuzzer:
             with open(self.filename, 'r') as f: targets.extend([l.strip() for l in f if l.strip()])
         if not targets: sys.exit(f"{Fore.RED}[!] No target provided. Use -h for help.{Style.RESET_ALL}")
 
-        # The core loop: now assigns a fresh workspace for EVERY target
         for t in targets:
             self.set_target_workspace(t)
             self.recon(t)
             
             if not self.dedup():
-                continue # Skip to the next target if recon failed
+                continue 
                 
             self.dns_intel()
-            self.probe_live()
+            
+            # FIXED: If probe_live returns False, safely abort the rest of the scan for this domain
+            if not self.probe_live():
+                continue
+                
             self.nuclei_scan()
             self.generate_html_report()
             self.active_validation()
             self.ai_analysis()
             
-            # Print success summary for THIS specific target
             print(f"\n{Fore.GREEN}======================================")
             print(f"✅ Pipeline Completed Successfully for: {t}")
             print(f"📁 Workspace Area : {self.output_dir}/")
