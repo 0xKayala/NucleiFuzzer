@@ -400,23 +400,51 @@ class NucleiFuzzer:
             self.active_validation()
             self.ai_analysis()
             
-        print(f"\n{Fore.GREEN}✅ Pipeline Complete. Results in {self.output_dir}{Style.RESET_ALL}")
+        print(f"\n{Fore.GREEN}======================================")
+        print(f"✅ Pipeline Completed Successfully!")
+        print(f"📁 JSON Results  : {self.json_file}")
+        print(f"🌐 HTML Report   : {self.html_file}")
+        if self.validate_mode: print(f"🛡️  Proofs Dir   : {self.proofs_dir}")
+        if self.ai_mode: print(f"🧠 AI Insights   : {self.ai_file}")
+        print(f"======================================{Style.RESET_ALL}")
 
 # ==============================================================================
-# 🛠️ SECTION 3: ARGUMENT PARSING
-# This part defines the flags (like -d, -f, --ai) that you type in the terminal.
+# 🛠️ SECTION 3: ARGUMENT PARSING & HELP MENU
+# Defines the flags and displays a detailed help menu with examples.
 # ==============================================================================
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-d", "--domain", help="Single domain to scan")
-    parser.add_argument("-f", "--file", help="File containing multiple domains")
-    parser.add_argument("--fast", action="store_true", help="Fast scan mode")
-    parser.add_argument("--deep", action="store_true", help="Deep scan mode")
-    parser.add_argument("--validate", action="store_true", help="Enable Active Validation")
-    parser.add_argument("--ai", action="store_true", help="Enable Deep AI Analysis")
-    parser.add_argument("--doctor", action="store_true", help="Run diagnostics")
-    parser.add_argument("--update", action="store_true", help="Update tools")
-    parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS)
+    custom_epilog = f"""
+{Fore.CYAN}Examples & Usage Insights:{Style.RESET_ALL}
+  {Fore.GREEN}1. Standard Scan:{Style.RESET_ALL}      nf -d example.com
+  {Fore.GREEN}2. Fast Batch Scan:{Style.RESET_ALL}    nf -f targets.txt --fast
+  {Fore.GREEN}3. Next-Gen Attack:{Style.RESET_ALL}    nf -d example.com --validate --ai
+                         {Fore.YELLOW}└─> '--validate' automatically runs SQLMap/Dalfox on SQLi/XSS findings.{Style.RESET_ALL}
+                         {Fore.YELLOW}└─> '--ai' sends logic/endpoints to Gemini to suggest exploit chains.{Style.RESET_ALL}
+  {Fore.GREEN}4. System Diagnostics:{Style.RESET_ALL} nf --doctor
+  {Fore.GREEN}5. Smart Install:{Style.RESET_ALL}      nf --update
+"""
+    parser = argparse.ArgumentParser(
+        description=f"{Fore.RED}NucleiFuzzer v4.0 - Master Python Engine{Style.RESET_ALL}",
+        epilog=custom_epilog,
+        formatter_class=argparse.RawTextHelpFormatter,
+        add_help=False
+    )
     
-    # Start the engine!
-    NucleiFuzzer(parser.parse_args()).run()
+    # Core Scans
+    parser.add_argument("-d", "--domain", help="Single domain to scan (e.g., target.com)")
+    parser.add_argument("-f", "--file", help="File containing multiple domains (e.g., list.txt)")
+    parser.add_argument("--fast", action="store_true", help="Enable fast scanning mode (Higher Rate Limit: 200)")
+    parser.add_argument("--deep", action="store_true", help="Enable deep scanning mode (Lower Rate Limit: 50)")
+    
+    # Advanced Modules
+    parser.add_argument("--validate", action="store_true", help="Enable Active Validation (Proves vulns with SQLMap/Dalfox)")
+    parser.add_argument("--ai", action="store_true", help="Enable Deep Context AI Analysis (Requires GEMINI_API_KEY)")
+    
+    # Utility Modules
+    parser.add_argument("--doctor", action="store_true", help="Run system diagnostics (Checks tools & API keys)")
+    parser.add_argument("--update", action="store_true", help="Smart Update (Installs missing tools & updates templates)")
+    parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show this extended help message and exit")
+    
+    # Execute the Engine!
+    nf = NucleiFuzzer(parser.parse_args())
+    nf.run()
