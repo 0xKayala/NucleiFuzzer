@@ -245,12 +245,26 @@ class NucleiFuzzer:
     def nuclei_scan(self):
         print(f"\n{Fore.BLUE}[*] PHASE 5: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
         templates = os.path.expanduser("~/nuclei-templates")
-        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -je {self.json_file}"
+        
+        # Added '-color' to force Nuclei to keep its pretty ANSI colors even when Python intercepts it
+        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -je {self.json_file} -color"
         
         try:
-            subprocess.run(cmd, shell=True, check=True)
-        except subprocess.CalledProcessError:
-            print(f"{Fore.RED}[WARN] Nuclei encountered an error during execution.{Style.RESET_ALL}")
+            # Intercept the Nuclei output stream in real-time
+            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            
+            for line in process.stdout:
+                # 🚫 SILENCE THE NOISE: Filter out the annoying 'unresponsive' and 'Skipped' logs
+                if "Skipped" in line and "unresponsive" in line:
+                    continue
+                
+                # Print everything else (Banner, Actual Findings, and valid info) directly to the screen
+                print(line, end="")
+                
+            process.wait()
+            
+        except Exception as e:
+            print(f"{Fore.RED}[WARN] Nuclei encountered an execution error: {str(e)}{Style.RESET_ALL}")
 
     # --------------------------------------------------------------------------
     # 📊 FUNCTION: generate_html_report
