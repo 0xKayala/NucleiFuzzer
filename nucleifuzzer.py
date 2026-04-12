@@ -30,7 +30,7 @@ class NucleiFuzzer:
         self.doctor_mode = args.doctor
         self.update_mode = args.update
         
-        self.base_dir = Path(__file__).parent.absolute()
+        self.base_dir = Path.cwd()
         self.output_dir = self.base_dir / "output"
         self.proofs_dir = self.output_dir / "proofs"
         
