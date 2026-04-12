@@ -1,144 +1,74 @@
 #!/bin/bash
 
 # ==========================================
-# 🧠 AI ANALYSIS MODULE (v3.3 ELITE ENGINE)
+# 🧠 AI ANALYSIS & LOGIC ENGINE (v3.4)
 # ==========================================
 
 run_ai_analysis() {
     local json="$1"
     local output="$2"
+    local js_file="$JS_URLS" # Exported from crawling.sh
 
     if [ ! -f "$json" ] || [ ! -s "$json" ]; then
         echo "[WARN] No data for AI analysis"
         return
     fi
 
-    echo -e "${BLUE}[*] Running AI Analysis...${RESET}"
-
-    # --------------------------------------
-    # 📊 BASIC COUNTS
-    # --------------------------------------
-
-    CRITICAL=$(grep -c '"severity":"critical"' "$json")
-    HIGH=$(grep -c '"severity":"high"' "$json")
-    MEDIUM=$(grep -c '"severity":"medium"' "$json")
-
-    TOTAL=$((CRITICAL + HIGH + MEDIUM))
-
-    # --------------------------------------
-    # 🧠 DETECTION FLAGS
-    # --------------------------------------
-
-    HAS_IDOR=$(grep -qi "idor" "$json" && echo "true" || echo "false")
-    HAS_XSS=$(grep -qi "xss" "$json" && echo "true" || echo "false")
-    HAS_SSRF=$(grep -qi "ssrf" "$json" && echo "true" || echo "false")
-    HAS_SQLI=$(grep -qi "sql" "$json" && echo "true" || echo "false")
-    HAS_RCE=$(grep -qi "rce" "$json" && echo "true" || echo "false")
-
-    # --------------------------------------
-    # 🧠 RISK SCORING ENGINE (NEW)
-    # --------------------------------------
-
-    SCORE=0
-
-    ((SCORE += CRITICAL * 5))
-    ((SCORE += HIGH * 3))
-    ((SCORE += MEDIUM * 1))
-
-    if [ "$HAS_RCE" = "true" ]; then ((SCORE += 10)); fi
-    if [ "$HAS_SSRF" = "true" ]; then ((SCORE += 8)); fi
-    if [ "$HAS_SQLI" = "true" ]; then ((SCORE += 7)); fi
-    if [ "$HAS_IDOR" = "true" ]; then ((SCORE += 6)); fi
-    if [ "$HAS_XSS" = "true" ]; then ((SCORE += 4)); fi
-
-    # --------------------------------------
-    # 🧠 AI PROVIDER DETECTION (NEW)
-    # --------------------------------------
+    echo -e "${BLUE}[*] Running Deep AI Context Analysis...${RESET}"
 
     AI_PROVIDER="none"
-
     if command -v gemini &>/dev/null && [ -n "$GEMINI_API_KEY" ]; then
         AI_PROVIDER="gemini"
-    elif [ -n "$OPENAI_API_KEY" ]; then
-        AI_PROVIDER="openai"
-    elif [ -n "$CLAUDE_API_KEY" ]; then
-        AI_PROVIDER="claude"
     fi
 
-    # --------------------------------------
-    # 📄 BASE OUTPUT
-    # --------------------------------------
+    if [ "$AI_PROVIDER" == "none" ]; then
+        echo "[WARN] Gemini CLI not configured. Skipping Deep AI Analysis."
+        return
+    fi
 
     {
         echo "======================================"
-        echo "🧠 AI SECURITY INSIGHTS"
+        echo "🧠 DEEP AI SECURITY INSIGHTS"
         echo "======================================"
         echo ""
-
-        echo "📊 Overview:"
-        echo "Total Findings : $TOTAL"
-        echo "Critical       : $CRITICAL"
-        echo "High           : $HIGH"
-        echo "Medium         : $MEDIUM"
-        echo ""
-
-        echo "🧠 Risk Score: $SCORE"
-        echo ""
-
-        # ----------------------------------
-        # 🚨 PRIORITY
-        # ----------------------------------
-
-        if [ "$SCORE" -gt 20 ]; then
-            echo "🚨 PRIORITY: CRITICAL RISK"
-        elif [ "$SCORE" -gt 10 ]; then
-            echo "⚠️ PRIORITY: HIGH RISK"
-        else
-            echo "✅ PRIORITY: MODERATE RISK"
-        fi
-
-        echo ""
-
-        # ----------------------------------
-        # 🔍 VULNERABILITY INSIGHTS
-        # ----------------------------------
-
-        echo "🔍 Key Findings:"
-
-        [ "$HAS_RCE" = "true" ] && echo "- RCE detected → Critical exploitation possible"
-        [ "$HAS_SQLI" = "true" ] && echo "- SQL Injection → Database compromise risk"
-        [ "$HAS_SSRF" = "true" ] && echo "- SSRF → Internal service access risk"
-        [ "$HAS_IDOR" = "true" ] && echo "- IDOR → Broken access control"
-        [ "$HAS_XSS" = "true" ] && echo "- XSS → Client-side exploitation"
-
-        echo ""
-
-        # ----------------------------------
-        # 💡 ACTIONABLE STEPS
-        # ----------------------------------
-
-        echo "💡 Recommended Actions:"
-        echo "- Validate findings manually"
-        echo "- Focus on high-impact endpoints first"
-        echo "- Attempt chaining vulnerabilities"
-        echo "- Run deeper scan (--deep)"
-
-        echo ""
-
-        # ----------------------------------
-        # 🤖 EXTERNAL AI (OPTIONAL)
-        # ----------------------------------
-
-        if [ "$AI_PROVIDER" = "gemini" ]; then
-            echo "🤖 Gemini AI Insights:"
-            gemini "Analyze this vulnerability report and suggest exploitation paths:" \
-                < "$json" 2>/dev/null | head -n 15
-            echo ""
-        fi
-
-        echo "======================================"
-
     } > "$output"
 
-    echo "[OK] AI analysis saved → $output"
+    # --------------------------------------
+    # 🕵️‍♂️ Phase 1: JS Business Logic Extraction
+    # --------------------------------------
+    if [ -n "$js_file" ] && [ -s "$js_file" ]; then
+        echo -e "${CYAN}[*] Analyzing JS files for hidden endpoints...${RESET}"
+        
+        # Analyze top 3 to save token limits
+        head -n 3 "$js_file" > "$OUTPUT_DIR/top_js.txt"
+        
+        echo -e "### Hidden API Endpoints & Logic (Extracted from JS) ###\n" >> "$output"
+        
+        while read -r js_url; do
+            [ -z "$js_url" ] && continue
+            echo "[*] Fetching and analyzing: $js_url"
+            
+            # Fetch JS and send snippet to AI
+            curl -sL "$js_url" | head -c 8000 | gemini "
+            You are an expert bug bounty hunter. Read this JavaScript snippet. 
+            Extract any hidden API endpoints, hardcoded secrets, AWS keys, or administrative paths. 
+            Format as a bulleted list. Do not explain the code, just extract the vulnerabilities.
+            " >> "$output"
+            echo "" >> "$output"
+        done < "$OUTPUT_DIR/top_js.txt"
+    fi
+
+    # --------------------------------------
+    # 🎯 Phase 2: Vulnerability Chaining
+    # --------------------------------------
+    echo -e "${CYAN}[*] Generating Attack Chains...${RESET}"
+    echo -e "\n### AI Attack Chaining Strategies ###\n" >> "$output"
+    
+    gemini "
+    You are an elite penetration tester. Review this vulnerability report JSON.
+    Identify how these vulnerabilities can be chained together (e.g., combining an Open Redirect with an SSRF).
+    Provide a step-by-step exploitation strategy for the highest severity finding.
+    " < "$json" >> "$output"
+
+    echo -e "${GREEN}[OK] Deep AI analysis saved → $output${RESET}"
 }
