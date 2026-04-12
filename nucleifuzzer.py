@@ -47,6 +47,7 @@ class NucleiFuzzer:
         self.html_file = self.output_dir / "report.html"
         self.js_file = self.output_dir / "js_endpoints.txt"
         self.ai_file = self.output_dir / "ai_insights.txt"
+        self.dns_file = self.output_dir / "dns_intel.txt"
 
         # Rate limits
         self.rate_limit = 200 if self.fast_mode else 50
@@ -84,7 +85,7 @@ class NucleiFuzzer:
         print(f"🩺 NucleiFuzzer Diagnostics (Doctor Mode)")
         print(f"======================================{Style.RESET_ALL}\n")
         
-        tools = ["python3", "pip3", "go", "nuclei", "httpx", "katana", "waybackurls", "gauplus", "hakrawler", "uro", "sqlmap", "dalfox"]
+        tools = ["python3", "pip3", "go", "nuclei", "httpx", "katana", "waybackurls", "gauplus", "hakrawler", "uro", "sqlmap", "dalfox", "subpipe"]
         issues = 0
         
         for tool in tools:
@@ -99,6 +100,11 @@ class NucleiFuzzer:
             print(f"{Fore.GREEN}[OK] GEMINI_API_KEY is configured.{Style.RESET_ALL}")
         else:
             print(f"{Fore.YELLOW}[WARN] GEMINI_API_KEY is missing. Deep AI analysis will be skipped.{Style.RESET_ALL}")
+
+        if os.environ.get("SUBPIPE_API_KEY"):
+            print(f"{Fore.GREEN}[OK] SUBPIPE_API_KEY is configured.{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.YELLOW}[WARN] SUBPIPE_API_KEY is missing. DNS Intelligence (SubPipe) will be skipped.{Style.RESET_ALL}")
 
         print(f"\n{Fore.CYAN}======================================")
         if issues == 0:
@@ -179,18 +185,37 @@ class NucleiFuzzer:
         self.run_command(f"sort -u {self.raw_file} | uro > {self.validated_file}")
 
     # ==========================================
-    # 🌐 PHASE 3: LIVE HOST PROBING
+    # 🌐 PHASE 3: DNS INTELLIGENCE (SubPipe)
+    # ==========================================
+    def dns_intel(self):
+        subpipe_key = os.environ.get("SUBPIPE_API_KEY")
+        if not subpipe_key or not shutil.which("subpipe"):
+            return # Silently skip if key or tool is missing
+
+        print(f"\n{Fore.BLUE}[*] PHASE 3: Running DNS Intelligence (SubPipe)...{Style.RESET_ALL}")
+        
+        # Pass the validated URLs into subpipe
+        cmd = f"cat {self.validated_file} | subpipe > {self.dns_file}"
+        self.run_command(cmd, silent=True)
+        
+        if self.dns_file.exists() and self.dns_file.stat().st_size > 0:
+            print(f"{Fore.GREEN}[+] DNS vulnerabilities detected! Saved to {self.dns_file}{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.YELLOW}[INFO] No DNS issues found.{Style.RESET_ALL}")
+
+    # ==========================================
+    # 📡 PHASE 4: LIVE HOST PROBING
     # ==========================================
     def probe_live(self):
-        print(f"\n{Fore.BLUE}[*] PHASE 3: Probing live hosts with httpx...{Style.RESET_ALL}")
+        print(f"\n{Fore.BLUE}[*] PHASE 4: Probing live hosts with httpx...{Style.RESET_ALL}")
         cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l {self.validated_file} -o {self.live_file}"
         self.run_command(cmd, silent=True)
 
     # ==========================================
-    # ⚡ PHASE 4: NUCLEI SCANNING
+    # ⚡ PHASE 5: NUCLEI SCANNING
     # ==========================================
     def nuclei_scan(self):
-        print(f"\n{Fore.BLUE}[*] PHASE 4: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
+        print(f"\n{Fore.BLUE}[*] PHASE 5: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
         template_dir = os.path.expanduser("~/nuclei-templates")
         cmd = f"nuclei -l {self.live_file} -t {template_dir} -dast -severity critical,high,medium,low -rl {self.rate_limit} -jsonl -silent -o {self.json_file}"
         self.run_command(cmd)
@@ -343,6 +368,7 @@ class NucleiFuzzer:
         for target in targets:
             self.recon(target)
             self.dedup()
+            self.dns_intel()
             self.probe_live()
             self.nuclei_scan()
             
