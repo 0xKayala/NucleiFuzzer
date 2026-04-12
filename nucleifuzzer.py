@@ -2,8 +2,6 @@
 
 # ==============================================================================
 # 📦 SECTION 1: SYSTEM IMPORTS
-# These libraries provide basic system functions like file handling, 
-# running terminal commands, and managing dates/times.
 # ==============================================================================
 import os
 import sys
@@ -17,18 +15,16 @@ from datetime import datetime
 from pathlib import Path
 from colorama import init, Fore, Style
 
-# Initialize colorama for cross-platform color support in the terminal
 init(autoreset=True)
 
 # ==============================================================================
 # 🚀 SECTION 2: THE CORE ENGINE CLASS
-# This class contains all the logic for recon, scanning, and AI analysis.
 # ==============================================================================
 class NucleiFuzzer:
     def __init__(self, args):
         """
-        INITIALIZATION: 
-        Sets up the folders, file paths, and scan settings based on your input.
+        INITIALIZATION: Sets up the base parameters.
+        Output file definitions are now handled dynamically per-target!
         """
         self.domain = args.domain
         self.filename = args.file
@@ -39,17 +35,30 @@ class NucleiFuzzer:
         self.doctor_mode = args.doctor
         self.update_mode = args.update
         
-        # Path configuration (Uses your current folder to save results)
+        # Base output directory
         self.base_dir = Path.cwd()
-        self.output_dir = self.base_dir / "output"
+        self.base_output_dir = self.base_dir / "output"
+        
+        self.rate_limit = 200 if self.fast_mode else 50
+        self.excluded_exts = "png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt"
+
+    # --------------------------------------------------------------------------
+    # 📁 NEW FUNCTION: set_target_workspace
+    # Creates an isolated, dedicated folder for each specific domain.
+    # --------------------------------------------------------------------------
+    def set_target_workspace(self, target):
+        # Sanitize the target name (e.g. "http://example.com" -> "example.com")
+        safe_target = target.replace("http://", "").replace("https://", "").split("/")[0]
+        
+        # Create dedicated folders for this specific target
+        self.output_dir = self.base_output_dir / safe_target
         self.proofs_dir = self.output_dir / "proofs"
         
-        # Create folders unless just running a check or update
         if not self.doctor_mode and not self.update_mode:
-            self.output_dir.mkdir(exist_ok=True)
-            self.proofs_dir.mkdir(exist_ok=True)
-        
-        # Define standard file names for results
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+            self.proofs_dir.mkdir(parents=True, exist_ok=True)
+            
+        # Define standard file names localized to this target's folder
         self.raw_file = self.output_dir / "raw.txt"
         self.validated_file = self.output_dir / "validated.txt"
         self.live_file = self.output_dir / "live.txt"
@@ -59,15 +68,8 @@ class NucleiFuzzer:
         self.ai_file = self.output_dir / "ai_insights.txt"
         self.dns_file = self.output_dir / "dns_intel.txt"
 
-        # Scanning speed (Rate Limit)
-        self.rate_limit = 200 if self.fast_mode else 50
-        
-        # Excluded extensions (Restored from v2.5.1 for cleaner recon)
-        self.excluded_exts = "png,jpg,gif,jpeg,swf,woff,svg,pdf,json,css,js,webp,woff,woff2,eot,ttf,otf,mp4,txt"
-
     # --------------------------------------------------------------------------
     # 🎨 FUNCTION: show_banner
-    # Displays the ASCII art and version info when the tool starts.
     # --------------------------------------------------------------------------
     def show_banner(self):
         banner = f"""{Fore.RED}
@@ -79,13 +81,12 @@ class NucleiFuzzer:
 ╚═╝  ╚═══╝ ╚═════╝  ╚═════╝╚══════╝╚══════╝╚═╝╚═╝      ╚═════╝ ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝
                                                
                                             ⚡ NucleiFuzzer v4.0 (Python Core Engine)
-                                               High-Speed Pipeline + AI Validation
+                                               High-Speed Pipeline + Target Isolation
 {Style.RESET_ALL}"""
         print(banner)
 
     # --------------------------------------------------------------------------
     # 💻 FUNCTION: run_command
-    # Safely executes terminal commands (like nuclei or katana) from Python.
     # --------------------------------------------------------------------------
     def run_command(self, cmd, silent=False):
         try:
@@ -99,7 +100,6 @@ class NucleiFuzzer:
 
     # --------------------------------------------------------------------------
     # 🩺 FUNCTION: run_doctor
-    # Checks if all required hacking tools and API keys are present.
     # --------------------------------------------------------------------------
     def run_doctor(self):
         print(f"\n{Fore.CYAN}======================================")
@@ -133,7 +133,6 @@ class NucleiFuzzer:
 
     # --------------------------------------------------------------------------
     # ⬆️ FUNCTION: run_update
-    # SMART INSTALLER: Only downloads and installs tools you don't have yet.
     # --------------------------------------------------------------------------
     def run_update(self):
         print(f"\n{Fore.CYAN}======================================")
@@ -166,36 +165,30 @@ class NucleiFuzzer:
             else:
                 print(f"{Fore.GREEN}[OK] {tool} is already installed.{Style.RESET_ALL}")
 
-        # Check for sqlmap (Linux system package)
         if not shutil.which("sqlmap"):
             print(f"{Fore.YELLOW}[!] sqlmap is missing. Installing via apt...{Style.RESET_ALL}")
             self.run_command("sudo apt-get update && sudo apt-get install sqlmap -y", silent=True)
             installed_any = True
 
-        # Check for ParamSpider (GitHub repository)
         param_path = os.path.expanduser("~/ParamSpider")
         if not os.path.exists(param_path):
             print(f"{Fore.YELLOW}[!] ParamSpider is missing. Cloning repository...{Style.RESET_ALL}")
             self.run_command(f"git clone https://github.com/0xKayala/ParamSpider {param_path}", silent=True)
             installed_any = True
 
-        # Update Nuclei templates
         self.run_command("nuclei -update-templates", silent=True)
         print(f"\n{Fore.GREEN}✅ Smart update complete. System is ready.{Style.RESET_ALL}")
         sys.exit(0)
 
     # --------------------------------------------------------------------------
     # 🔍 FUNCTION: recon (PHASE 1)
-    # Starts all reconnaissance tools at the same time for maximum speed.
     # --------------------------------------------------------------------------
     def recon(self, target):
         print(f"\n{Fore.BLUE}[*] PHASE 1: Starting Parallel Recon & URL Collection for {target}...{Style.RESET_ALL}")
         
-        # TARGET NORMALIZATION: Some tools need a strict URL (http://), others need a domain.
         target_url = target if target.startswith("http") else f"http://{target}"
         target_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
 
-        # RE-ADDED: --level high for ParamSpider and explicit exclusions for cleaner output.
         commands = {
             "ParamSpider": f"python3 ~/ParamSpider/paramspider.py -d {target_domain} --exclude {self.excluded_exts} --level high --quiet -o {self.output_dir}/param.txt",
             "Waybackurls": f"echo {target_domain} | waybackurls > {self.output_dir}/wayback.txt",
@@ -204,31 +197,27 @@ class NucleiFuzzer:
             "Katana": f"echo {target_url} | katana -d 3 -silent > {self.output_dir}/katana.txt"
         }
 
-        # Multi-threading: Runs all 5 tools above simultaneously
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = {executor.submit(self.run_command, cmd, True): name for name, cmd in commands.items()}
             for future in concurrent.futures.as_completed(futures):
                 print(f"{Fore.GREEN}[+] {futures[future]} completed.{Style.RESET_ALL}")
 
-        # Merge results into one file
         self.run_command(f"cat {self.output_dir}/*.txt | grep -aE '^https?://' > {self.raw_file}", silent=True)
-        # Use Raw String (rf"") to prevent regex escape warnings
         self.run_command(rf"grep -aEi '\.js(\?|$)' {self.raw_file} > {self.js_file}", silent=True)
 
     # --------------------------------------------------------------------------
     # 🧹 FUNCTION: dedup (PHASE 2)
-    # Removes all duplicate URLs to keep the scan focused.
     # --------------------------------------------------------------------------
     def dedup(self):
         print(f"\n{Fore.BLUE}[*] PHASE 2: Deduplicating URLs...{Style.RESET_ALL}")
         if not self.raw_file.exists() or self.raw_file.stat().st_size == 0:
             print(f"{Fore.RED}[!] No URLs found during recon. Exiting.{Style.RESET_ALL}")
-            sys.exit(1)
+            return False
         self.run_command(f"sort -u {self.raw_file} | uro > {self.validated_file}")
+        return True
 
     # --------------------------------------------------------------------------
     # 🌐 FUNCTION: dns_intel (PHASE 3)
-    # Runs the SubPipe tool to look for DNS-based vulnerabilities.
     # --------------------------------------------------------------------------
     def dns_intel(self):
         if not os.environ.get("SUBPIPE_API_KEY") or not shutil.which("subpipe"):
@@ -240,31 +229,24 @@ class NucleiFuzzer:
 
     # --------------------------------------------------------------------------
     # 📡 FUNCTION: probe_live (PHASE 4)
-    # Uses httpx to verify which URLs are actually online and responding.
     # --------------------------------------------------------------------------
     def probe_live(self):
         print(f"\n{Fore.BLUE}[*] PHASE 4: Probing live hosts with httpx...{Style.RESET_ALL}")
         cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l {self.validated_file} -o {self.live_file}"
         self.run_command(cmd, silent=True)
         
-        # Fallback: If httpx drops everything (Cloud Shell issue), use validated file
         if not self.live_file.exists() or self.live_file.stat().st_size == 0:
             print(f"{Fore.YELLOW}[WARN] No live hosts found. Bypassing httpx filter.{Style.RESET_ALL}")
             shutil.copy(self.validated_file, self.live_file)
 
     # --------------------------------------------------------------------------
     # ⚡ FUNCTION: nuclei_scan (PHASE 5)
-    # Fires the Nuclei scanner with fuzzing templates at the live targets.
     # --------------------------------------------------------------------------
     def nuclei_scan(self):
         print(f"\n{Fore.BLUE}[*] PHASE 5: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
         templates = os.path.expanduser("~/nuclei-templates")
-        
-        # RESTORED: Removed severity filters so ALL dast templates execute (just like v2.5.1).
-        # RESTORED: Switched -jsonl to -je (JSON Export) to restore standard colorful terminal output!
         cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -je {self.json_file}"
         
-        # We don't use run_command here because we want the user to see the live Nuclei output stream!
         try:
             subprocess.run(cmd, shell=True, check=True)
         except subprocess.CalledProcessError:
@@ -272,7 +254,6 @@ class NucleiFuzzer:
 
     # --------------------------------------------------------------------------
     # 📊 FUNCTION: generate_html_report
-    # Converts the raw JSON data into a beautiful, dark-themed HTML file.
     # --------------------------------------------------------------------------
     def generate_html_report(self):
         if not self.json_file.exists() or self.json_file.stat().st_size == 0:
@@ -289,14 +270,12 @@ class NucleiFuzzer:
                         findings.append(d)
                         s = d.get('info', {}).get('severity', 'info').lower()
                         if s in counts: counts[s] += 1
-                        elif s == 'unknown': counts['info'] += 1 # Group unknown with info
+                        elif s == 'unknown': counts['info'] += 1 
                     except: pass
         
-        # Sort findings by severity (Critical first)
         sev_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4, "unknown": 5}
         findings.sort(key=lambda x: sev_order.get(x.get('info', {}).get('severity', 'info').lower(), 6))
 
-        # HTML Styling and Template
         html_tpl = f"""<!DOCTYPE html><html><head><title>NucleiFuzzer Results</title>
         <style>
             body {{ background: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 40px; }}
@@ -333,7 +312,6 @@ class NucleiFuzzer:
 
     # --------------------------------------------------------------------------
     # 🎯 FUNCTION: active_validation
-    # Automatically triggers sqlmap or dalfox to PROVE the vulnerabilities found.
     # --------------------------------------------------------------------------
     def active_validation(self):
         if not self.validate_mode or not self.json_file.exists() or self.json_file.stat().st_size == 0:
@@ -342,13 +320,11 @@ class NucleiFuzzer:
         with open(self.json_file, 'r') as f:
             v = [json.loads(l) for l in f if l.strip()]
 
-        # Proof for SQLi
         sqli = [x['matched-at'] for x in v if 'sqli' in x.get('info', {}).get('name', '').lower()]
         if sqli and shutil.which("sqlmap"):
             for t in set(sqli): 
                 self.run_command(f"sqlmap -u \"{t}\" --batch --level 1 --risk 1 --dbs --output-dir={self.proofs_dir}/sqlmap", silent=True)
 
-        # Proof for XSS
         xss = [x['matched-at'] for x in v if 'xss' in x.get('info', {}).get('name', '').lower()]
         if xss and shutil.which("dalfox"):
             xf = self.output_dir / "xss_targets.txt"
@@ -357,7 +333,6 @@ class NucleiFuzzer:
 
     # --------------------------------------------------------------------------
     # 🧠 FUNCTION: ai_analysis
-    # Sends data to Google Gemini AI to find logic flaws and chain exploits.
     # --------------------------------------------------------------------------
     def ai_analysis(self):
         if not self.ai_mode or not os.environ.get("GEMINI_API_KEY"):
@@ -371,48 +346,59 @@ class NucleiFuzzer:
                 r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={key}", 
                                   json={"contents": [{"parts": [{"text": prompt}]}]})
                 data = r.json()
-                if 'error' in data: return f"API Error: {data['error'].get('message')}"
-                if 'candidates' not in data or not data['candidates']: return "Blocked by Safety Filter"
+                if 'error' in data: return f"API Error: {data['error'].get('message', 'Unknown error')}"
+                if 'candidates' not in data or not data['candidates']: return "AI Blocked Request: No candidates returned (Safety Filters)."
                 return data['candidates'][0]['content']['parts'][0]['text']
-            except: return "AI Request Failed"
+            except Exception as e: return f"AI System Error: {str(e)}"
 
         with open(self.ai_file, 'w') as out:
-            out.write(f"=== 🧠 AI SECURITY INSIGHTS ({datetime.now()}) ===\n\n")
-            
-            # Phase 1: JS Logic
-            if self.js_file.exists():
+            out.write("=== 🧠 NUCLEIFUZZER DEEP AI INSIGHTS ===\n")
+            out.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+            if self.js_file.exists() and self.js_file.stat().st_size > 0:
+                print(f"{Fore.CYAN}[*] Extracting logic from key JavaScript files...{Style.RESET_ALL}")
                 with open(self.js_file, 'r') as f:
-                    for url in [l.strip() for l in f.readlines()[:3]]:
-                        try:
-                            js = requests.get(url, timeout=5).text[:8000]
-                            out.write(f"[*] JS Findings for {url}:\n{ask_gemini(f'Extract hidden endpoints/secrets from JS: {js}')}\n\n")
-                        except: pass
-            
-            # Phase 2: Chaining
-            if self.json_file.exists():
+                    js_urls = [line.strip() for line in f.readlines()[:3]] 
+                
+                for url in js_urls:
+                    try:
+                        js_content = requests.get(url, timeout=5).text[:8000]
+                        prompt = f"Act as an elite bug hunter. Extract hidden API endpoints and secrets as a bulleted list from this JS: {js_content}"
+                        out.write(f"[*] Findings for {url}:\n{ask_gemini(prompt)}\n\n")
+                    except Exception as e:
+                        out.write(f"[*] Failed to fetch {url}: {str(e)}\n\n")
+
+            if self.json_file.exists() and self.json_file.stat().st_size > 0:
+                print(f"{Fore.CYAN}[*] Strategizing attack chains from Nuclei results...{Style.RESET_ALL}")
                 with open(self.json_file, 'r') as f:
-                    out.write(f"=== Exploit Chaining Strategies ===\n{ask_gemini(f'Chain these vulnerabilities: {f.read()[:8000]}')}\n")
-        print(f"{Fore.GREEN}[+] AI Analysis saved to {self.ai_file}{Style.RESET_ALL}")
+                    vulns = f.read()[:10000]
+                prompt = f"Review this vulnerability report. Identify potential exploit chains (e.g., LFI to RCE). Provide strategy: {vulns}"
+                out.write(f"=== Exploit Chaining Strategies ===\n{ask_gemini(prompt)}\n")
+
+        print(f"{Fore.GREEN}[+] AI Insights successfully saved to {self.ai_file}{Style.RESET_ALL}")
 
     # --------------------------------------------------------------------------
     # 🚀 FUNCTION: run
-    # THE MASTER ORCHESTRATOR: Controls the order of everything.
+    # THE MASTER ORCHESTRATOR
     # --------------------------------------------------------------------------
     def run(self):
         self.show_banner()
         if self.doctor_mode: self.run_doctor()
         if self.update_mode: self.run_update()
         
-        # Load targets from -d (domain) or -f (file)
         targets = [self.domain] if self.domain else []
         if self.filename:
             with open(self.filename, 'r') as f: targets.extend([l.strip() for l in f if l.strip()])
         if not targets: sys.exit(f"{Fore.RED}[!] No target provided. Use -h for help.{Style.RESET_ALL}")
 
-        # Loop through every domain provided
+        # The core loop: now assigns a fresh workspace for EVERY target
         for t in targets:
+            self.set_target_workspace(t)
             self.recon(t)
-            self.dedup()
+            
+            if not self.dedup():
+                continue # Skip to the next target if recon failed
+                
             self.dns_intel()
             self.probe_live()
             self.nuclei_scan()
@@ -420,17 +406,18 @@ class NucleiFuzzer:
             self.active_validation()
             self.ai_analysis()
             
-        print(f"\n{Fore.GREEN}======================================")
-        print(f"✅ Pipeline Completed Successfully!")
-        print(f"📁 JSON Results : {self.json_file}")
-        print(f"🌐 HTML Report  : {self.html_file}")
-        if self.validate_mode: print(f"🛡️  Proofs Dir   : {self.proofs_dir}")
-        if self.ai_mode:       print(f"🧠 AI Insights   : {self.ai_file}")
-        print(f"======================================{Style.RESET_ALL}")
+            # Print success summary for THIS specific target
+            print(f"\n{Fore.GREEN}======================================")
+            print(f"✅ Pipeline Completed Successfully for: {t}")
+            print(f"📁 Workspace Area : {self.output_dir}/")
+            print(f"📄 JSON Results   : {self.json_file.name}")
+            print(f"🌐 HTML Report    : {self.html_file.name}")
+            if self.validate_mode: print(f"🛡️  Proofs Dir     : proofs/")
+            if self.ai_mode:       print(f"🧠 AI Insights    : {self.ai_file.name}")
+            print(f"======================================{Style.RESET_ALL}")
 
 # ==============================================================================
 # 🛠️ SECTION 3: ARGUMENT PARSING & HELP MENU
-# Defines the flags and displays a detailed help menu with examples.
 # ==============================================================================
 if __name__ == "__main__":
     custom_epilog = f"""
@@ -450,21 +437,15 @@ if __name__ == "__main__":
         add_help=False
     )
     
-    # Core Scans
     parser.add_argument("-d", "--domain", help="Single domain to scan (e.g., target.com)")
     parser.add_argument("-f", "--file", help="File containing multiple domains (e.g., list.txt)")
     parser.add_argument("--fast", action="store_true", help="Enable fast scanning mode (Higher Rate Limit: 200)")
     parser.add_argument("--deep", action="store_true", help="Enable deep scanning mode (Lower Rate Limit: 50)")
-    
-    # Advanced Modules
     parser.add_argument("--validate", action="store_true", help="Enable Active Validation (Proves vulns with SQLMap/Dalfox)")
     parser.add_argument("--ai", action="store_true", help="Enable Deep Context AI Analysis (Requires GEMINI_API_KEY)")
-    
-    # Utility Modules
     parser.add_argument("--doctor", action="store_true", help="Run system diagnostics (Checks tools & API keys)")
     parser.add_argument("--update", action="store_true", help="Smart Update (Installs missing tools & updates templates)")
     parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show this extended help message and exit")
     
-    # Execute the Engine!
     nf = NucleiFuzzer(parser.parse_args())
     nf.run()
