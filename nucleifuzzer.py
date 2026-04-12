@@ -171,7 +171,7 @@ class NucleiFuzzer:
 
         print(f"{Fore.CYAN}[*] Merging raw URLs...{Style.RESET_ALL}")
         self.run_command(f"cat {self.output_dir}/*.txt | grep -aE '^https?://' > {self.raw_file}", silent=True)
-        self.run_command(f"grep -aEi '\.js(\?|$)' {self.raw_file} > {self.js_file}", silent=True)
+        self.run_command(rf"grep -aEi '\.js(\?|$)' {self.raw_file} > {self.js_file}", silent=True)
 
     # ==========================================
     # 🧹 PHASE 2: DEDUP & FILTERING
