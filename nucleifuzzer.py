@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# ==============================================================================
+# 📦 SECTION 1: SYSTEM IMPORTS
+# These libraries provide basic system functions like file handling, 
+# running terminal commands, and managing dates/times.
+# ==============================================================================
 import os
 import sys
 import json
@@ -12,15 +17,19 @@ from datetime import datetime
 from pathlib import Path
 from colorama import init, Fore, Style
 
-# Initialize colorama for cross-platform color support
+# Initialize colorama for cross-platform color support in the terminal
 init(autoreset=True)
 
-# ==========================================
-# 🔥 NUCLEIFUZZER v4.0 - MASTER PYTHON ENGINE
-# ==========================================
-
+# ==============================================================================
+# 🚀 SECTION 2: THE CORE ENGINE CLASS
+# This class contains all the logic for recon, scanning, and AI analysis.
+# ==============================================================================
 class NucleiFuzzer:
     def __init__(self, args):
+        """
+        INITIALIZATION: 
+        Sets up the folders, file paths, and scan settings based on your input.
+        """
         self.domain = args.domain
         self.filename = args.file
         self.ai_mode = args.ai
@@ -30,16 +39,17 @@ class NucleiFuzzer:
         self.doctor_mode = args.doctor
         self.update_mode = args.update
         
+        # Path configuration (Uses your current folder to save results)
         self.base_dir = Path.cwd()
         self.output_dir = self.base_dir / "output"
         self.proofs_dir = self.output_dir / "proofs"
         
-        # Ensure directories exist
+        # Create folders unless just running a check or update
         if not self.doctor_mode and not self.update_mode:
             self.output_dir.mkdir(exist_ok=True)
             self.proofs_dir.mkdir(exist_ok=True)
         
-        # Output files
+        # Define standard file names for results
         self.raw_file = self.output_dir / "raw.txt"
         self.validated_file = self.output_dir / "validated.txt"
         self.live_file = self.output_dir / "live.txt"
@@ -49,9 +59,13 @@ class NucleiFuzzer:
         self.ai_file = self.output_dir / "ai_insights.txt"
         self.dns_file = self.output_dir / "dns_intel.txt"
 
-        # Rate limits
+        # Scanning speed (Rate Limit)
         self.rate_limit = 200 if self.fast_mode else 50
 
+    # --------------------------------------------------------------------------
+    # 🎨 FUNCTION: show_banner
+    # Displays the ASCII art and version info when the tool starts.
+    # --------------------------------------------------------------------------
     def show_banner(self):
         banner = f"""{Fore.RED}
 ███╗   ██╗██╗   ██╗ ██████╗██╗     ███████╗██╗███████╗██╗   ██╗███████╗███████╗███████╗██████╗ 
@@ -66,8 +80,11 @@ class NucleiFuzzer:
 {Style.RESET_ALL}"""
         print(banner)
 
+    # --------------------------------------------------------------------------
+    # 💻 FUNCTION: run_command
+    # Safely executes terminal commands (like nuclei or katana) from Python.
+    # --------------------------------------------------------------------------
     def run_command(self, cmd, silent=False):
-        """Helper to safely run shell commands."""
         try:
             if silent:
                 subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -75,11 +92,12 @@ class NucleiFuzzer:
                 subprocess.run(cmd, shell=True, check=True)
         except subprocess.CalledProcessError:
             if not silent:
-                print(f"{Fore.RED}[WARN] Command failed or returned empty: {cmd}{Style.RESET_ALL}")
+                print(f"{Fore.RED}[WARN] Command failed: {cmd}{Style.RESET_ALL}")
 
-    # ==========================================
-    # 🩺 DOCTOR MODE
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 🩺 FUNCTION: run_doctor
+    # Checks if all required hacking tools and API keys are present.
+    # --------------------------------------------------------------------------
     def run_doctor(self):
         print(f"\n{Fore.CYAN}======================================")
         print(f"🩺 NucleiFuzzer Diagnostics (Doctor Mode)")
@@ -96,15 +114,11 @@ class NucleiFuzzer:
                 issues += 1
                 
         print("\n[*] Checking Environment Variables...")
-        if os.environ.get("GEMINI_API_KEY"):
-            print(f"{Fore.GREEN}[OK] GEMINI_API_KEY is configured.{Style.RESET_ALL}")
-        else:
-            print(f"{Fore.YELLOW}[WARN] GEMINI_API_KEY is missing. Deep AI analysis will be skipped.{Style.RESET_ALL}")
-
-        if os.environ.get("SUBPIPE_API_KEY"):
-            print(f"{Fore.GREEN}[OK] SUBPIPE_API_KEY is configured.{Style.RESET_ALL}")
-        else:
-            print(f"{Fore.YELLOW}[WARN] SUBPIPE_API_KEY is missing. DNS Intelligence (SubPipe) will be skipped.{Style.RESET_ALL}")
+        for var in ["GEMINI_API_KEY", "SUBPIPE_API_KEY"]:
+            if os.environ.get(var):
+                print(f"{Fore.GREEN}[OK] {var} is configured.{Style.RESET_ALL}")
+            else:
+                print(f"{Fore.YELLOW}[WARN] {var} is missing. Related features will be skipped.{Style.RESET_ALL}")
 
         print(f"\n{Fore.CYAN}======================================")
         if issues == 0:
@@ -114,19 +128,19 @@ class NucleiFuzzer:
         print(f"{Fore.CYAN}======================================{Style.RESET_ALL}")
         sys.exit(0)
 
-    # ==========================================
-    # ⬆️ SMART UPDATE / INSTALL MODE
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # ⬆️ FUNCTION: run_update
+    # SMART INSTALLER: Only downloads and installs tools you don't have yet.
+    # --------------------------------------------------------------------------
     def run_update(self):
         print(f"\n{Fore.CYAN}======================================")
         print(f"⬆️  NucleiFuzzer Smart Installer & Updater")
         print(f"======================================{Style.RESET_ALL}\n")
         
         if not shutil.which("go"):
-            print(f"{Fore.RED}[!] Go is not installed. Please install Golang first before running the updater.{Style.RESET_ALL}")
+            print(f"{Fore.RED}[!] Go is not installed. Please install Golang first.{Style.RESET_ALL}")
             sys.exit(1)
 
-        # Mapping of Go tools to their repository paths
         go_tools = {
             "nuclei": "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest",
             "httpx": "github.com/projectdiscovery/httpx/cmd/httpx@latest",
@@ -139,8 +153,8 @@ class NucleiFuzzer:
         }
 
         installed_any = False
-
-        print(f"{Fore.BLUE}[*] Checking Go-based dependencies...{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}[*] Checking and installing missing tools...{Style.RESET_ALL}")
+        
         for tool, path in go_tools.items():
             if not shutil.which(tool):
                 print(f"{Fore.YELLOW}[!] {tool} is missing. Installing...{Style.RESET_ALL}")
@@ -149,48 +163,30 @@ class NucleiFuzzer:
             else:
                 print(f"{Fore.GREEN}[OK] {tool} is already installed.{Style.RESET_ALL}")
 
-        print(f"\n{Fore.BLUE}[*] Checking Python dependencies...{Style.RESET_ALL}")
-        if not shutil.which("uro"):
-            print(f"{Fore.YELLOW}[!] uro is missing. Installing...{Style.RESET_ALL}")
-            self.run_command("pip3 install uro --break-system-packages 2>/dev/null || pip3 install uro", silent=True)
-            installed_any = True
-        else:
-            print(f"{Fore.GREEN}[OK] uro is already installed.{Style.RESET_ALL}")
-
-        print(f"\n{Fore.BLUE}[*] Checking System tools...{Style.RESET_ALL}")
+        # Check for sqlmap (Linux system package)
         if not shutil.which("sqlmap"):
             print(f"{Fore.YELLOW}[!] sqlmap is missing. Installing via apt...{Style.RESET_ALL}")
             self.run_command("sudo apt-get update && sudo apt-get install sqlmap -y", silent=True)
             installed_any = True
-        else:
-            print(f"{Fore.GREEN}[OK] sqlmap is already installed.{Style.RESET_ALL}")
 
-        print(f"\n{Fore.BLUE}[*] Checking ParamSpider...{Style.RESET_ALL}")
-        paramspider_path = os.path.expanduser("~/ParamSpider")
-        if not os.path.exists(paramspider_path):
+        # Check for ParamSpider (GitHub repository)
+        param_path = os.path.expanduser("~/ParamSpider")
+        if not os.path.exists(param_path):
             print(f"{Fore.YELLOW}[!] ParamSpider is missing. Cloning repository...{Style.RESET_ALL}")
-            self.run_command(f"git clone https://github.com/0xKayala/ParamSpider {paramspider_path}", silent=True)
+            self.run_command(f"git clone https://github.com/0xKayala/ParamSpider {param_path}", silent=True)
             installed_any = True
-        else:
-            print(f"{Fore.GREEN}[OK] ParamSpider is already installed.{Style.RESET_ALL}")
 
-        print(f"\n{Fore.BLUE}[*] Ensuring Nuclei Templates are up-to-date...{Style.RESET_ALL}")
+        # Update Nuclei templates
         self.run_command("nuclei -update-templates", silent=True)
-
-        print(f"\n{Fore.CYAN}======================================")
-        if installed_any:
-            print(f"{Fore.GREEN}✅ All missing tools have been successfully installed!{Style.RESET_ALL}")
-        else:
-            print(f"{Fore.GREEN}✅ All tools are already present. You are good to go!{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}======================================{Style.RESET_ALL}")
+        print(f"\n{Fore.GREEN}✅ Smart update complete. System is ready.{Style.RESET_ALL}")
         sys.exit(0)
 
-    # ==========================================
-    # 🔍 PHASE 1: PARALLEL RECON
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 🔍 FUNCTION: recon (PHASE 1)
+    # Starts all reconnaissance tools at the same time for maximum speed.
+    # --------------------------------------------------------------------------
     def recon(self, target):
         print(f"\n{Fore.BLUE}[*] PHASE 1: Starting Parallel Recon & URL Collection for {target}...{Style.RESET_ALL}")
-        
         commands = {
             "ParamSpider": f"python3 ~/ParamSpider/paramspider.py -d {target} --quiet -o {self.output_dir}/param.txt",
             "Waybackurls": f"echo {target} | waybackurls > {self.output_dir}/wayback.txt",
@@ -199,257 +195,228 @@ class NucleiFuzzer:
             "Katana": f"echo {target} | katana -d 3 -silent > {self.output_dir}/katana.txt"
         }
 
+        # Multi-threading: Runs all 5 tools above simultaneously
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = {executor.submit(self.run_command, cmd, True): name for name, cmd in commands.items()}
             for future in concurrent.futures.as_completed(futures):
                 print(f"{Fore.GREEN}[+] {futures[future]} completed.{Style.RESET_ALL}")
 
-        print(f"{Fore.CYAN}[*] Merging raw URLs...{Style.RESET_ALL}")
+        # Merge results into one file
         self.run_command(f"cat {self.output_dir}/*.txt | grep -aE '^https?://' > {self.raw_file}", silent=True)
+        # Use Raw String (rf"") to prevent regex escape warnings
         self.run_command(rf"grep -aEi '\.js(\?|$)' {self.raw_file} > {self.js_file}", silent=True)
 
-    # ==========================================
-    # 🧹 PHASE 2: DEDUP & FILTERING
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 🧹 FUNCTION: dedup (PHASE 2)
+    # Removes all duplicate URLs to keep the scan focused.
+    # --------------------------------------------------------------------------
     def dedup(self):
         print(f"\n{Fore.BLUE}[*] PHASE 2: Deduplicating URLs...{Style.RESET_ALL}")
         if not self.raw_file.exists() or self.raw_file.stat().st_size == 0:
             print(f"{Fore.RED}[!] No URLs found during recon. Exiting.{Style.RESET_ALL}")
             sys.exit(1)
-            
         self.run_command(f"sort -u {self.raw_file} | uro > {self.validated_file}")
 
-    # ==========================================
-    # 🌐 PHASE 3: DNS INTELLIGENCE (SubPipe)
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 🌐 FUNCTION: dns_intel (PHASE 3)
+    # Runs the SubPipe tool to look for DNS-based vulnerabilities.
+    # --------------------------------------------------------------------------
     def dns_intel(self):
-        subpipe_key = os.environ.get("SUBPIPE_API_KEY")
-        if not subpipe_key or not shutil.which("subpipe"):
-            return # Silently skip if key or tool is missing
-
+        if not os.environ.get("SUBPIPE_API_KEY") or not shutil.which("subpipe"):
+            return
         print(f"\n{Fore.BLUE}[*] PHASE 3: Running DNS Intelligence (SubPipe)...{Style.RESET_ALL}")
-        
-        # Pass the validated URLs into subpipe
-        cmd = f"cat {self.validated_file} | subpipe > {self.dns_file}"
-        self.run_command(cmd, silent=True)
-        
+        self.run_command(f"cat {self.validated_file} | subpipe > {self.dns_file}", silent=True)
         if self.dns_file.exists() and self.dns_file.stat().st_size > 0:
-            print(f"{Fore.GREEN}[+] DNS vulnerabilities detected! Saved to {self.dns_file}{Style.RESET_ALL}")
-        else:
-            print(f"{Fore.YELLOW}[INFO] No DNS issues found.{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[+] DNS issues detected: {self.dns_file}{Style.RESET_ALL}")
 
-    # ==========================================
-    # 📡 PHASE 4: LIVE HOST PROBING
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 📡 FUNCTION: probe_live (PHASE 4)
+    # Uses httpx to verify which URLs are actually online and responding.
+    # --------------------------------------------------------------------------
     def probe_live(self):
         print(f"\n{Fore.BLUE}[*] PHASE 4: Probing live hosts with httpx...{Style.RESET_ALL}")
         cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l {self.validated_file} -o {self.live_file}"
         self.run_command(cmd, silent=True)
-
-        # Safety Fallback: If httpx fails or drops all URLs, fallback to validated URLs
+        
+        # Fallback: If httpx drops everything (Cloud Shell issue), use validated file
         if not self.live_file.exists() or self.live_file.stat().st_size == 0:
-            print(f"{Fore.YELLOW}[WARN] httpx found no live hosts (Common in Cloud Shell environments).{Style.RESET_ALL}")
-            print(f"{Fore.CYAN}[*] Bypassing httpx filter and passing all URLs directly to Nuclei...{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[WARN] No live hosts found. Bypassing httpx filter.{Style.RESET_ALL}")
             shutil.copy(self.validated_file, self.live_file)
 
-    # ==========================================
-    # ⚡ PHASE 5: NUCLEI SCANNING
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # ⚡ FUNCTION: nuclei_scan (PHASE 5)
+    # Fires the Nuclei scanner with fuzzing templates at the live targets.
+    # --------------------------------------------------------------------------
     def nuclei_scan(self):
         print(f"\n{Fore.BLUE}[*] PHASE 5: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
-        template_dir = os.path.expanduser("~/nuclei-templates")
-        cmd = f"nuclei -l {self.live_file} -t {template_dir} -dast -severity critical,high,medium,low -rl {self.rate_limit} -jsonl -silent -o {self.json_file}"
+        templates = os.path.expanduser("~/nuclei-templates")
+        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -severity critical,high,medium,low -rl {self.rate_limit} -jsonl -silent -o {self.json_file}"
         self.run_command(cmd)
 
-    # ==========================================
-    # 📊 HTML REPORTING
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 📊 FUNCTION: generate_html_report
+    # Converts the raw JSON data into a beautiful, dark-themed HTML file.
+    # --------------------------------------------------------------------------
     def generate_html_report(self):
         if not self.json_file.exists() or self.json_file.stat().st_size == 0:
             return
-
         print(f"\n{Fore.CYAN}[*] Generating HTML Report...{Style.RESET_ALL}")
-        
         findings = []
-        counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+        counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
         
         with open(self.json_file, 'r') as f:
             for line in f:
                 if line.strip():
                     try:
-                        data = json.loads(line)
-                        findings.append(data)
-                        sev = data.get('info', {}).get('severity', 'info').lower()
-                        if sev in counts: counts[sev] += 1
+                        d = json.loads(line)
+                        findings.append(d)
+                        s = d.get('info', {}).get('severity', 'low').lower()
+                        if s in counts: counts[s] += 1
                     except: pass
-                    
-        # Sort findings by severity
-        severity_map = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
-        findings.sort(key=lambda x: severity_map.get(x.get('info', {}).get('severity', 'info').lower(), 5))
+        
+        # Sort findings by severity (Critical first)
+        sev_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+        findings.sort(key=lambda x: sev_order.get(x.get('info', {}).get('severity', 'low').lower(), 5))
 
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>NucleiFuzzer Results</title>
-            <style>
-                body {{ background-color: #121212; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; }}
-                h1 {{ color: #00ffcc; border-bottom: 2px solid #333; padding-bottom: 10px; }}
-                .summary {{ background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 30px; display: flex; gap: 20px; }}
-                .stat-box {{ background: #2d2d2d; padding: 15px 25px; border-radius: 6px; text-align: center; }}
-                .stat-box h3 {{ margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #888; }}
-                .stat-box .num {{ font-size: 24px; font-weight: bold; }}
-                .critical {{ color: #ff4444; }} .high {{ color: #ff8800; }} .medium {{ color: #ffcc00; }} .low {{ color: #00ccff; }}
-                table {{ width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }}
-                th, td {{ padding: 12px 15px; text-align: left; border-bottom: 1px solid #333; }}
-                th {{ background-color: #2d2d2d; color: #00ffcc; font-weight: bold; }}
-                tr:hover {{ background-color: #2a2a2a; }}
-                a {{ color: #00ffcc; text-decoration: none; }}
-                a:hover {{ text-decoration: underline; }}
-            </style>
-        </head>
-        <body>
-            <h1>⚡ NucleiFuzzer V4.0 Report</h1>
-            <div class="summary">
-                <div class="stat-box"><h3 class="critical">Critical</h3><div class="num critical">{counts['critical']}</div></div>
-                <div class="stat-box"><h3 class="high">High</h3><div class="num high">{counts['high']}</div></div>
-                <div class="stat-box"><h3 class="medium">Medium</h3><div class="num medium">{counts['medium']}</div></div>
-                <div class="stat-box"><h3 class="low">Low</h3><div class="num low">{counts['low']}</div></div>
-            </div>
-            <table>
-                <tr><th>Severity</th><th>Vulnerability</th><th>Target URL</th></tr>
-        """
+        # HTML Styling and Template
+        html_tpl = f"""<!DOCTYPE html><html><head><title>NucleiFuzzer Results</title>
+        <style>
+            body {{ background: #121212; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 40px; }}
+            .summary {{ display: flex; gap: 20px; margin-bottom: 30px; }}
+            .box {{ background: #1e1e1e; padding: 15px 30px; border-radius: 8px; text-align: center; min-width: 100px; border-left: 5px solid #333; }}
+            .critical {{ border-color: #ff4444; color: #ff4444; }} 
+            .high {{ border-color: #ff8800; color: #ff8800; }}
+            .medium {{ border-color: #ffcc00; color: #ffcc00; }}
+            .low {{ border-color: #00ccff; color: #00ccff; }}
+            table {{ width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }}
+            th, td {{ padding: 12px; border-bottom: 1px solid #333; text-align: left; }}
+            th {{ background: #2d2d2d; color: #00ffcc; }}
+            a {{ color: #00ffcc; text-decoration: none; }}
+        </style></head><body>
+        <h1>⚡ NucleiFuzzer V4.0 Report</h1>
+        <div class="summary">
+            <div class="box critical"><h3>Critical</h3><h2>{counts['critical']}</h2></div>
+            <div class="box high"><h3>High</h3><h2>{counts['high']}</h2></div>
+            <div class="box medium"><h3>Medium</h3><h2>{counts['medium']}</h2></div>
+            <div class="box low"><h3>Low</h3><h2>{counts['low']}</h2></div>
+        </div>
+        <table><tr><th>Severity</th><th>Vulnerability</th><th>Target URL</th></tr>"""
         
         for f in findings:
-            sev = f.get('info', {}).get('severity', 'info').lower()
-            name = html.escape(f.get('info', {}).get('name', 'Unknown'))
-            url = html.escape(f.get('matched-at', ''))
-            html_content += f"<tr><td class='{sev}'><b>{sev.upper()}</b></td><td>{name}</td><td><a href='{url}' target='_blank'>{url}</a></td></tr>\n"
-            
-        html_content += "</table></body></html>"
+            s = f.get('info', {}).get('severity', 'low').lower()
+            n = html.escape(f.get('info', {}).get('name', 'Unknown'))
+            u = html.escape(f.get('matched-at', ''))
+            html_tpl += f"<tr><td class='{s}'><b>{s.upper()}</b></td><td>{n}</td><td><a href='{u}' target='_blank'>{u}</a></td></tr>"
         
-        with open(self.html_file, 'w') as f:
-            f.write(html_content)
+        with open(self.html_file, 'w') as f: 
+            f.write(html_tpl + "</table></body></html>")
 
-    # ==========================================
-    # 🎯 OPTIONAL: ACTIVE VALIDATION
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 🎯 FUNCTION: active_validation
+    # Automatically triggers sqlmap or dalfox to PROVE the vulnerabilities found.
+    # --------------------------------------------------------------------------
     def active_validation(self):
         if not self.validate_mode or not self.json_file.exists() or self.json_file.stat().st_size == 0:
             return
-            
-        print(f"\n{Fore.YELLOW}[*] OPTIONAL PHASE: Initializing Active Validation...{Style.RESET_ALL}")
+        print(f"\n{Fore.YELLOW}[*] OPTIONAL PHASE: Initializing Active Validation (sqlmap/dalfox)...{Style.RESET_ALL}")
         with open(self.json_file, 'r') as f:
-            findings = [json.loads(line) for line in f if line.strip()]
+            v = [json.loads(l) for l in f if l.strip()]
 
-        sqli_targets = [f['matched-at'] for f in findings if 'sqli' in f.get('info', {}).get('name', '').lower()]
-        if sqli_targets and shutil.which("sqlmap"):
-            print(f"{Fore.CYAN}[!] Triggering SQLMap against potential SQLi targets...{Style.RESET_ALL}")
-            for target in set(sqli_targets):
-                cmd = f"sqlmap -u \"{target}\" --batch --level 1 --risk 1 --dbs --output-dir={self.proofs_dir}/sqlmap"
-                self.run_command(cmd, silent=True)
+        # Proof for SQLi
+        sqli = [x['matched-at'] for x in v if 'sqli' in x.get('info', {}).get('name', '').lower()]
+        if sqli and shutil.which("sqlmap"):
+            for t in set(sqli): 
+                self.run_command(f"sqlmap -u \"{t}\" --batch --level 1 --risk 1 --dbs --output-dir={self.proofs_dir}/sqlmap", silent=True)
 
-        xss_targets = [f['matched-at'] for f in findings if 'xss' in f.get('info', {}).get('name', '').lower()]
-        if xss_targets and shutil.which("dalfox"):
-            print(f"{Fore.CYAN}[!] Triggering Dalfox against potential XSS targets...{Style.RESET_ALL}")
-            xss_file = self.output_dir / "xss_targets.txt"
-            with open(xss_file, 'w') as f: f.write("\n".join(set(xss_targets)))
-            self.run_command(f"dalfox file {xss_file} -o {self.proofs_dir}/xss_confirmed.txt", silent=True)
+        # Proof for XSS
+        xss = [x['matched-at'] for x in v if 'xss' in x.get('info', {}).get('name', '').lower()]
+        if xss and shutil.which("dalfox"):
+            xf = self.output_dir / "xss_targets.txt"
+            with open(xf, 'w') as f: f.write("\n".join(set(xss)))
+            self.run_command(f"dalfox file {xf} -o {self.proofs_dir}/xss_confirmed.txt", silent=True)
 
-    # ==========================================
-    # 🧠 OPTIONAL: DEEP AI ANALYSIS
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 🧠 FUNCTION: ai_analysis
+    # Sends data to Google Gemini AI to find logic flaws and chain exploits.
+    # --------------------------------------------------------------------------
     def ai_analysis(self):
-        if not self.ai_mode: return
-        gemini_key = os.environ.get("GEMINI_API_KEY")
-        if not gemini_key: return
-        
-        print(f"\n{Fore.YELLOW}[*] OPTIONAL PHASE: Running Deep AI Context Analysis...{Style.RESET_ALL}")
+        if not self.ai_mode or not os.environ.get("GEMINI_API_KEY"):
+            return
+        print(f"\n{Fore.YELLOW}[*] OPTIONAL PHASE: Running Deep AI Context Analysis (Gemini)...{Style.RESET_ALL}")
         import requests
+        key = os.environ["GEMINI_API_KEY"]
         
         def ask_gemini(prompt):
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
             try:
-                res = requests.post(url, headers={'Content-Type': 'application/json'}, json={"contents": [{"parts": [{"text": prompt}]}]})
-                data = res.json()
-                
-                # Check if the API returned an explicit error
-                if 'error' in data:
-                    return f"API Error: {data['error'].get('message', 'Unknown error')}"
-                    
-                # Check if Google's safety filters blocked the payload
-                if 'promptFeedback' in data and 'blockReason' in data['promptFeedback']:
-                    return f"API Blocked Request (Safety Filter): {data['promptFeedback']['blockReason']}"
-                    
+                r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={key}", 
+                                  json={"contents": [{"parts": [{"text": prompt}]}]})
+                data = r.json()
+                if 'error' in data: return f"API Error: {data['error'].get('message')}"
+                if 'candidates' not in data or not data['candidates']: return "Blocked by Safety Filter"
                 return data['candidates'][0]['content']['parts'][0]['text']
-            except Exception as e: 
-                # If JSON parsing fails entirely, print the raw response
-                return f"AI parsing error: {str(e)} | Raw API Response: {res.text[:200]}"
+            except: return "AI Request Failed"
 
         with open(self.ai_file, 'w') as out:
-            out.write("=== 🧠 NUCLEIFUZZER DEEP AI INSIGHTS ===\n\n")
-            if self.js_file.exists() and self.js_file.stat().st_size > 0:
-                with open(self.js_file, 'r') as f: js_urls = [line.strip() for line in f.readlines()[:3]]
-                for url in js_urls:
-                    try:
-                        js_content = requests.get(url, timeout=5).text[:8000]
-                        out.write(f"[*] Findings for {url}:\n{ask_gemini(f'Extract hidden APIs/secrets from this JS: {js_content}')}\n\n")
-                    except Exception as e: 
-                        out.write(f"[*] Could not fetch {url}: {str(e)}\n\n")
+            out.write(f"=== 🧠 AI SECURITY INSIGHTS ({datetime.now()}) ===\n\n")
             
-            if self.json_file.exists() and self.json_file.stat().st_size > 0:
-                with open(self.json_file, 'r') as f: vulns = f.read()[:10000]
-                out.write(f"=== Exploit Chaining Strategies ===\n{ask_gemini(f'Identify how these vulnerabilities can be chained: {vulns}')}\n")
+            # Phase 1: JS Logic
+            if self.js_file.exists():
+                with open(self.js_file, 'r') as f:
+                    for url in [l.strip() for l in f.readlines()[:3]]:
+                        try:
+                            js = requests.get(url, timeout=5).text[:8000]
+                            out.write(f"[*] JS Findings for {url}:\n{ask_gemini(f'Extract hidden endpoints/secrets from JS: {js}')}\n\n")
+                        except: pass
+            
+            # Phase 2: Chaining
+            if self.json_file.exists():
+                with open(self.json_file, 'r') as f:
+                    out.write(f"=== Exploit Chaining Strategies ===\n{ask_gemini(f'Chain these vulnerabilities: {f.read()[:8000]}')}\n")
+        print(f"{Fore.GREEN}[+] AI Analysis saved to {self.ai_file}{Style.RESET_ALL}")
 
-    # ==========================================
-    # 🚀 ORCHESTRATOR EXECUTION
-    # ==========================================
+    # --------------------------------------------------------------------------
+    # 🚀 FUNCTION: run
+    # THE MASTER ORCHESTRATOR: Controls the order of everything.
+    # --------------------------------------------------------------------------
     def run(self):
         self.show_banner()
-        
         if self.doctor_mode: self.run_doctor()
         if self.update_mode: self.run_update()
-            
-        targets = []
-        if self.domain: targets.append(self.domain)
+        
+        # Load targets from -d (domain) or -f (file)
+        targets = [self.domain] if self.domain else []
         if self.filename:
-            with open(self.filename, 'r') as f: targets.extend([line.strip() for line in f if line.strip()])
+            with open(self.filename, 'r') as f: targets.extend([l.strip() for l in f if l.strip()])
+        if not targets: sys.exit(f"{Fore.RED}[!] No target provided.{Style.RESET_ALL}")
 
-        if not targets:
-            print(f"{Fore.RED}[!] Please provide a target using -d or -f{Style.RESET_ALL}")
-            sys.exit(1)
-
-        for target in targets:
-            self.recon(target)
+        # Loop through every domain provided
+        for t in targets:
+            self.recon(t)
             self.dedup()
             self.dns_intel()
             self.probe_live()
             self.nuclei_scan()
-            
             self.generate_html_report()
             self.active_validation()
             self.ai_analysis()
+            
+        print(f"\n{Fore.GREEN}✅ Pipeline Complete. Results in {self.output_dir}{Style.RESET_ALL}")
 
-        print(f"\n{Fore.GREEN}======================================")
-        print(f"✅ Pipeline Completed Successfully!")
-        print(f"📁 JSON Results  : {self.json_file}")
-        print(f"🌐 HTML Report   : {self.html_file}")
-        if self.validate_mode: print(f"🛡️  Proofs Dir   : {self.proofs_dir}")
-        if self.ai_mode: print(f"🧠 AI Insights   : {self.ai_file}")
-        print(f"======================================{Style.RESET_ALL}")
-
+# ==============================================================================
+# 🛠️ SECTION 3: ARGUMENT PARSING
+# This part defines the flags (like -d, -f, --ai) that you type in the terminal.
+# ==============================================================================
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="NucleiFuzzer AI Python Orchestrator", add_help=False)
-    
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-d", "--domain", help="Single domain to scan")
     parser.add_argument("-f", "--file", help="File containing multiple domains")
-    parser.add_argument("--fast", action="store_true", help="Enable fast scanning mode")
-    parser.add_argument("--deep", action="store_true", help="Enable deep scanning mode")
-    parser.add_argument("--validate", action="store_true", help="Enable Active Validation (SQLMap, Dalfox)")
-    parser.add_argument("--ai", action="store_true", help="Enable Deep Context AI Analysis")
-    parser.add_argument("--doctor", action="store_true", help="Run system diagnostics")
+    parser.add_argument("--fast", action="store_true", help="Fast scan mode")
+    parser.add_argument("--deep", action="store_true", help="Deep scan mode")
+    parser.add_argument("--validate", action="store_true", help="Enable Active Validation")
+    parser.add_argument("--ai", action="store_true", help="Enable Deep AI Analysis")
+    parser.add_argument("--doctor", action="store_true", help="Run diagnostics")
     parser.add_argument("--update", action="store_true", help="Update tools")
-    parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS, help="Show help")
-
-    nf = NucleiFuzzer(parser.parse_args())
-    nf.run()
+    parser.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS)
+    
+    # Start the engine!
+    NucleiFuzzer(parser.parse_args()).run()
