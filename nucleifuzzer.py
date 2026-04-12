@@ -371,8 +371,20 @@ class NucleiFuzzer:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
             try:
                 res = requests.post(url, headers={'Content-Type': 'application/json'}, json={"contents": [{"parts": [{"text": prompt}]}]})
-                return res.json()['candidates'][0]['content']['parts'][0]['text']
-            except Exception as e: return f"AI API Error: {str(e)}"
+                data = res.json()
+                
+                # Check if the API returned an explicit error
+                if 'error' in data:
+                    return f"API Error: {data['error'].get('message', 'Unknown error')}"
+                    
+                # Check if Google's safety filters blocked the payload
+                if 'promptFeedback' in data and 'blockReason' in data['promptFeedback']:
+                    return f"API Blocked Request (Safety Filter): {data['promptFeedback']['blockReason']}"
+                    
+                return data['candidates'][0]['content']['parts'][0]['text']
+            except Exception as e: 
+                # If JSON parsing fails entirely, print the raw response
+                return f"AI parsing error: {str(e)} | Raw API Response: {res.text[:200]}"
 
         with open(self.ai_file, 'w') as out:
             out.write("=== 🧠 NUCLEIFUZZER DEEP AI INSIGHTS ===\n\n")
@@ -382,7 +394,8 @@ class NucleiFuzzer:
                     try:
                         js_content = requests.get(url, timeout=5).text[:8000]
                         out.write(f"[*] Findings for {url}:\n{ask_gemini(f'Extract hidden APIs/secrets from this JS: {js_content}')}\n\n")
-                    except: pass
+                    except Exception as e: 
+                        out.write(f"[*] Could not fetch {url}: {str(e)}\n\n")
             
             if self.json_file.exists() and self.json_file.stat().st_size > 0:
                 with open(self.json_file, 'r') as f: vulns = f.read()[:10000]
