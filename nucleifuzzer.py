@@ -110,44 +110,79 @@ class NucleiFuzzer:
         if issues == 0:
             print(f"{Fore.GREEN}✅ System is 100% ready.{Style.RESET_ALL}")
         else:
-            print(f"{Fore.YELLOW}⚠️  Found {issues} missing dependencies. Run with --update to install Go tools.{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}⚠️  Found {issues} missing dependencies. Run with --update to install tools.{Style.RESET_ALL}")
         print(f"{Fore.CYAN}======================================{Style.RESET_ALL}")
         sys.exit(0)
 
     # ==========================================
-    # ⬆️ UPDATE MODE
+    # ⬆️ SMART UPDATE / INSTALL MODE
     # ==========================================
     def run_update(self):
         print(f"\n{Fore.CYAN}======================================")
-        print(f"⬆️  NucleiFuzzer Update Engine")
+        print(f"⬆️  NucleiFuzzer Smart Installer & Updater")
         print(f"======================================{Style.RESET_ALL}\n")
         
         if not shutil.which("go"):
-            print(f"{Fore.RED}[!] Go is not installed. Please install Golang first.{Style.RESET_ALL}")
+            print(f"{Fore.RED}[!] Go is not installed. Please install Golang first before running the updater.{Style.RESET_ALL}")
             sys.exit(1)
 
+        # Mapping of Go tools to their repository paths
         go_tools = {
             "nuclei": "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest",
             "httpx": "github.com/projectdiscovery/httpx/cmd/httpx@latest",
             "katana": "github.com/projectdiscovery/katana/cmd/katana@latest",
             "waybackurls": "github.com/tomnomnom/waybackurls@latest",
             "gauplus": "github.com/bp0lr/gauplus@latest",
-            "hakrawler": "github.com/hakluke/hakrawler@latest"
+            "hakrawler": "github.com/hakluke/hakrawler@latest",
+            "dalfox": "github.com/hahwul/dalfox/v2@latest",
+            "subpipe": "github.com/anshumanpattnaik/subpipe@latest"
         }
 
-        print(f"{Fore.BLUE}[*] Updating Go-based dependencies...{Style.RESET_ALL}")
-        for tool, path in go_tools.items():
-            print(f"[*] Installing/Updating {tool}...")
-            self.run_command(f"go install -v {path}", silent=True)
-            
-        print(f"\n{Fore.BLUE}[*] Updating Python packages...{Style.RESET_ALL}")
-        self.run_command("pip3 install --upgrade uro requests colorama", silent=True)
-        
-        print(f"\n{Fore.BLUE}[*] Updating Nuclei Templates...{Style.RESET_ALL}")
-        self.run_command("nuclei -update-templates", silent=True)
-        self.run_command("nuclei -update", silent=True)
+        installed_any = False
 
-        print(f"\n{Fore.GREEN}✅ All tools updated successfully.{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}[*] Checking Go-based dependencies...{Style.RESET_ALL}")
+        for tool, path in go_tools.items():
+            if not shutil.which(tool):
+                print(f"{Fore.YELLOW}[!] {tool} is missing. Installing...{Style.RESET_ALL}")
+                self.run_command(f"go install -v {path}", silent=True)
+                installed_any = True
+            else:
+                print(f"{Fore.GREEN}[OK] {tool} is already installed.{Style.RESET_ALL}")
+
+        print(f"\n{Fore.BLUE}[*] Checking Python dependencies...{Style.RESET_ALL}")
+        if not shutil.which("uro"):
+            print(f"{Fore.YELLOW}[!] uro is missing. Installing...{Style.RESET_ALL}")
+            self.run_command("pip3 install uro --break-system-packages 2>/dev/null || pip3 install uro", silent=True)
+            installed_any = True
+        else:
+            print(f"{Fore.GREEN}[OK] uro is already installed.{Style.RESET_ALL}")
+
+        print(f"\n{Fore.BLUE}[*] Checking System tools...{Style.RESET_ALL}")
+        if not shutil.which("sqlmap"):
+            print(f"{Fore.YELLOW}[!] sqlmap is missing. Installing via apt...{Style.RESET_ALL}")
+            self.run_command("sudo apt-get update && sudo apt-get install sqlmap -y", silent=True)
+            installed_any = True
+        else:
+            print(f"{Fore.GREEN}[OK] sqlmap is already installed.{Style.RESET_ALL}")
+
+        print(f"\n{Fore.BLUE}[*] Checking ParamSpider...{Style.RESET_ALL}")
+        paramspider_path = os.path.expanduser("~/ParamSpider")
+        if not os.path.exists(paramspider_path):
+            print(f"{Fore.YELLOW}[!] ParamSpider is missing. Cloning repository...{Style.RESET_ALL}")
+            self.run_command(f"git clone https://github.com/0xKayala/ParamSpider {paramspider_path}", silent=True)
+            installed_any = True
+        else:
+            print(f"{Fore.GREEN}[OK] ParamSpider is already installed.{Style.RESET_ALL}")
+
+        print(f"\n{Fore.BLUE}[*] Ensuring Nuclei Templates are up-to-date...{Style.RESET_ALL}")
+        self.run_command("nuclei -update-templates", silent=True)
+
+        print(f"\n{Fore.CYAN}======================================")
+        if installed_any:
+            print(f"{Fore.GREEN}✅ All missing tools have been successfully installed!{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.GREEN}✅ All tools are already present. You are good to go!{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}======================================{Style.RESET_ALL}")
         sys.exit(0)
 
     # ==========================================
