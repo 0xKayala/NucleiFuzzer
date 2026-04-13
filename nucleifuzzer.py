@@ -146,6 +146,7 @@ class NucleiFuzzer:
             print(f"{Fore.RED}[!] Go is not installed. Please install Golang first.{Style.RESET_ALL}")
             sys.exit(1)
 
+        # FIXED: Added the correct public SubPipe repository
         go_tools = {
             "nuclei": "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest",
             "httpx": "github.com/projectdiscovery/httpx/cmd/httpx@latest",
@@ -154,7 +155,7 @@ class NucleiFuzzer:
             "gauplus": "github.com/bp0lr/gauplus@latest",
             "hakrawler": "github.com/hakluke/hakrawler@latest",
             "dalfox": "github.com/hahwul/dalfox/v2@latest",
-            "subpipe": "github.com/anshumanpattnaik/subpipe@latest"
+            "subpipe": "github.com/subpipe/subpipe@latest"
         }
 
         installed_any = False
@@ -163,7 +164,7 @@ class NucleiFuzzer:
         for tool, path in go_tools.items():
             if not shutil.which(tool):
                 print(f"{Fore.YELLOW}[!] {tool} is missing. Installing...{Style.RESET_ALL}")
-                self.run_command(f"go install -v {path}", silent=False) # Changed to silent=False
+                self.run_command(f"go install -v {path}", silent=False) 
                 installed_any = True
             else:
                 print(f"{Fore.GREEN}[OK] {tool} is already installed.{Style.RESET_ALL}")
