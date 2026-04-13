@@ -22,6 +22,18 @@ init(autoreset=True)
 # ==============================================================================
 class NucleiFuzzer:
     def __init__(self, args):
+        # ----------------------------------------------------------------------
+        # 🛠️ SYSTEM PATH FIX (Crucial for Go tools like Dalfox & Subpipe)
+        # ----------------------------------------------------------------------
+        go_bin = os.path.expanduser("~/go/bin")
+        local_bin = os.path.expanduser("~/.local/bin")
+        
+        if go_bin not in os.environ.get("PATH", ""):
+            os.environ["PATH"] += os.pathsep + go_bin
+            
+        if local_bin not in os.environ.get("PATH", ""):
+            os.environ["PATH"] += os.pathsep + local_bin
+
         self.domain = args.domain
         self.filename = args.file
         self.ai_mode = args.ai
@@ -151,20 +163,20 @@ class NucleiFuzzer:
         for tool, path in go_tools.items():
             if not shutil.which(tool):
                 print(f"{Fore.YELLOW}[!] {tool} is missing. Installing...{Style.RESET_ALL}")
-                self.run_command(f"go install -v {path}", silent=True)
+                self.run_command(f"go install -v {path}", silent=False) # Changed to silent=False
                 installed_any = True
             else:
                 print(f"{Fore.GREEN}[OK] {tool} is already installed.{Style.RESET_ALL}")
 
         if not shutil.which("sqlmap"):
             print(f"{Fore.YELLOW}[!] sqlmap is missing. Installing via apt...{Style.RESET_ALL}")
-            self.run_command("sudo apt-get update && sudo apt-get install sqlmap -y", silent=True)
+            self.run_command("sudo apt-get update && sudo apt-get install sqlmap -y", silent=False)
             installed_any = True
 
         param_path = os.path.expanduser("~/ParamSpider")
         if not os.path.exists(param_path):
             print(f"{Fore.YELLOW}[!] ParamSpider is missing. Cloning repository...{Style.RESET_ALL}")
-            self.run_command(f"git clone https://github.com/0xKayala/ParamSpider {param_path}", silent=True)
+            self.run_command(f"git clone https://github.com/0xKayala/ParamSpider {param_path}", silent=False)
             installed_any = True
 
         self.run_command("nuclei -update-templates", silent=True)
@@ -224,11 +236,9 @@ class NucleiFuzzer:
     def probe_live(self):
         print(f"\n{Fore.BLUE}[*] PHASE 4: Probing live hosts with httpx (WAF Evasion Enabled)...{Style.RESET_ALL}")
         
-        # UPGRADED: Added -random-agent, -timeout, -retries, and synced -rl to prevent WAF 429 blocks
         cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -random-agent -timeout 10 -retries 2 -rl {self.rate_limit} -l {self.validated_file} -o {self.live_file}"
         self.run_command(cmd, silent=True)
         
-        # FIXED: If httpx still finds nothing, we safely abort instead of dumping raw URLs into Nuclei
         if not self.live_file.exists() or self.live_file.stat().st_size == 0:
             print(f"{Fore.YELLOW}[WARN] httpx found 0 live hosts. The target may be down or aggressively blocking requests (WAF).{Style.RESET_ALL}")
             print(f"{Fore.RED}[!] Aborting Nuclei scan for this target to protect your IP from being banned.{Style.RESET_ALL}")
@@ -273,7 +283,6 @@ class NucleiFuzzer:
                 if line.strip():
                     try:
                         d = json.loads(line)
-                        # FIXED: Strict type check to prevent 'AttributeError: list object has no attribute get'
                         if isinstance(d, dict):
                             findings.append(d)
                             s = d.get('info', {}).get('severity', 'info').lower()
@@ -407,7 +416,6 @@ class NucleiFuzzer:
                 
             self.dns_intel()
             
-            # FIXED: If probe_live returns False, safely abort the rest of the scan for this domain
             if not self.probe_live():
                 continue
                 
