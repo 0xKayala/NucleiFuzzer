@@ -146,7 +146,6 @@ class NucleiFuzzer:
             print(f"{Fore.RED}[!] Go is not installed. Please install Golang first.{Style.RESET_ALL}")
             sys.exit(1)
 
-        # FIXED: Added the correct public SubPipe repository
         go_tools = {
             "nuclei": "github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest",
             "httpx": "github.com/projectdiscovery/httpx/cmd/httpx@latest",
@@ -254,7 +253,8 @@ class NucleiFuzzer:
         print(f"\n{Fore.BLUE}[*] PHASE 5: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
         templates = os.path.expanduser("~/nuclei-templates")
         
-        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -je {self.json_file} -color"
+        # FIXED: Removed the invalid '-color' flag. Nuclei outputs colors by default automatically.
+        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -je {self.json_file}"
         
         try:
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
