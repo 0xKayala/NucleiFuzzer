@@ -192,12 +192,13 @@ class NucleiFuzzer:
         target_url = target if target.startswith("http") else f"http://{target}"
         target_domain = target.replace("http://", "").replace("https://", "").split("/")[0]
 
+        # RESTORED: Katana now has -rl 10 to prevent early WAF bans, just like your bash script!
         commands = {
             "ParamSpider": f"python3 ~/ParamSpider/paramspider.py -d {target_domain} --exclude {self.excluded_exts} --level high --quiet -o {self.output_dir}/param.txt",
             "Waybackurls": f"echo {target_domain} | waybackurls > {self.output_dir}/wayback.txt",
             "Gauplus": f"echo {target_domain} | gauplus -subs -b {self.excluded_exts} > {self.output_dir}/gau.txt",
             "Hakrawler": f"echo {target_url} | hakrawler -d 3 -subs -u > {self.output_dir}/hakrawler.txt",
-            "Katana": f"echo {target_url} | katana -d 3 -silent > {self.output_dir}/katana.txt"
+            "Katana": f"echo {target_url} | katana -d 3 -silent -rl 10 > {self.output_dir}/katana.txt"
         }
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
@@ -234,13 +235,14 @@ class NucleiFuzzer:
     # 📡 FUNCTION: probe_live (PHASE 4)
     # --------------------------------------------------------------------------
     def probe_live(self):
-        print(f"\n{Fore.BLUE}[*] PHASE 4: Probing live hosts with httpx (WAF Evasion Enabled)...{Style.RESET_ALL}")
+        print(f"\n{Fore.BLUE}[*] PHASE 4: Probing live hosts with httpx...{Style.RESET_ALL}")
         
-        cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -random-agent -timeout 10 -retries 2 -rl {self.rate_limit} -l {self.validated_file} -o {self.live_file}"
+        # RESTORED: Uses the exact, proven baseline parameters from the v2.5.1 bash script
+        cmd = f"httpx -silent -mc 200,204,301,302,401,403,405,500,502,503,504 -l {self.validated_file} -o {self.live_file}"
         self.run_command(cmd, silent=True)
         
         if not self.live_file.exists() or self.live_file.stat().st_size == 0:
-            print(f"{Fore.YELLOW}[WARN] httpx found 0 live hosts. The target may be down or aggressively blocking requests (WAF).{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[WARN] httpx found 0 live hosts. The target may be down or aggressively blocking requests.{Style.RESET_ALL}")
             print(f"{Fore.RED}[!] Aborting Nuclei scan for this target to protect your IP from being banned.{Style.RESET_ALL}")
             return False
             
@@ -253,8 +255,8 @@ class NucleiFuzzer:
         print(f"\n{Fore.BLUE}[*] PHASE 5: Running Nuclei DAST Scan (Rate: {self.rate_limit})...{Style.RESET_ALL}")
         templates = os.path.expanduser("~/nuclei-templates")
         
-        # FIXED: Removed the invalid '-color' flag. Nuclei outputs colors by default automatically.
-        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -je {self.json_file}"
+        # RESTORED: Switched to -jsonl to fix the HTML generator, omitting -silent so findings print to terminal!
+        cmd = f"nuclei -l {self.live_file} -t {templates} -dast -rl {self.rate_limit} -jsonl -o {self.json_file}"
         
         try:
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
