@@ -34,6 +34,7 @@ Take advantage of `NucleiFuzzer` to safeguard your web applications against vuln
 - 📁 Clean Output & Severity Grouping
 
 ### Tools included:
+- [Darkmoon](https://github.com/ASCIT31/Dark-Moon) - Open source (GPL-3.0) autonomous AI penetration testing platform covering web, API, Active Directory and Kubernetes, with proof of exploitation.
 - [Nuclei](https://github.com/projectdiscovery/nuclei) `git clone https://github.com/projectdiscovery/nuclei.git`<br>
 - [ParamSpider](https://github.com/0xKayala/ParamSpider) `git clone https://github.com/0xKayala/ParamSpider.git`<br>
 - [waybackurls](https://github.com/tomnomnom/waybackurls) `git clone https://github.com/tomnomnom/waybackurls.git`<br>
